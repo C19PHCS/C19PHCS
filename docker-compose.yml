@@ -1,0 +1,36 @@
+version: "3.8"
+
+networks:
+  comp353:
+    driver: bridge
+
+services:
+  backend:
+    build:
+      context: ./backend
+    expose:
+      - 5000
+    ports:
+      - 5000:5000
+    env_file: ./env/backend.env
+    volumes:
+      - ./backend/:/app
+    depends_on: 
+      - database
+    networks:
+      - comp353
+
+  database:
+    image: mysql:latest
+    container_name: mysqldb
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    expose:
+      - 3306
+    ports:
+      - 3306:3306
+    env_file: ./env/database.env
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+        - comp353

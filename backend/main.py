@@ -1,32 +1,27 @@
+from flask import Flask
 from mysql.connector import connection, cursor
-from os import getenv
-from dotenv import load_dotenv, dotenv_values
-
-import flask
-
+from config import config
 
 class Person():
     def __init__(self, data):
         self.medicare_number = data[0]
 
 def main():
-    load_dotenv()
-    config = dotenv_values(".env")
-    cnx = connection.MySQLConnection(user=config["NAME"], password=config["PASSWORD"],
-                                     host=config["HOST"],
-                                     database=config["NAME"])
+    database_config = config["database"]
+    cnx = connection.MySQLConnection(user=database_config["username"], password=database_config["password"],
+                                     host=database_config["host"],
+                                     database=database_config["name"])
     cursor = cnx.cursor()
-    query = ("SELECT * FROM person")
+    query = ("SELECT * FROM test")
     cursor.execute(query)
 
     for data in cursor:
-        person = Person(data)
-        print(person.medicare_number)
+        print(data)
 
     cursor.close()
     cnx.close()
 
-    app = flask.Flask(__name__)
+    app = Flask(__name__)
     app.config["DEBUG"] = True
 
 
@@ -34,7 +29,9 @@ def main():
     def home():
         return "asdfasdfasdfasdf"
 
-    app.run()
+    return app
+
+app = main()
 
 if __name__ == "__main__":
-    main()
+    app.run()

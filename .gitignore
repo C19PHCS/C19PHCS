@@ -1,4 +1,6 @@
 .env
+.vscode/
+/.DS_Store
 # Created by https://www.toptal.com/developers/gitignore/api/python,virtualenv,vim,visualstudiocode,phpunit,intellij
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,virtualenv,vim,visualstudiocode,phpunit,intellij
 
