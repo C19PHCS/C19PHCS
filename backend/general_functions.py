@@ -148,7 +148,40 @@ def edit(table, data):
     return True
 
 # 7- set new alert for a specific region
+def get_previous_alert(data):
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    query = ("""SELECT DISTINCT alertLevel, date
+FROM alert
+WHERE regionName = '{}'
+ORDER BY date DESC
+LIMIT 1""").format(data)
+
+    cursor.execute(query)
+
+    columns = [col[0] for col in cursor.description]
+    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+    cursor.close()
+    conn.commit()
+    conn.close()
+
+    temp = 0
+    for i in rows:
+        temp = i['alertLevel']
+
+    return temp
+
 def set_region_alert(data):
+    previous_alert = get_previous_alert(data['regionName'])
+
+    if data['alertLevel'] <= 0 or data['alertLevel'] > 4:
+        raise Exception('invalid alert level')
+    
+    if (data['alertLevel'] + 1 is not previous_alert) and (data['alertLevel'] - 1 is not previous_alert):
+        raise Exception('cannot set alert to this level')
+
     create('alert', data)
 
 # 13- list of all regions
@@ -214,6 +247,7 @@ WHERE publicHealthCenterID = {} and PHW.medicareNumber = P.medicareNumber;""").f
 
     return rows
 
+# 16- list of all public health workers who tested positive on a specific date in a specific facility
 def get_all_at_risk_workers(from_date, to_date, workerid):
     conn = get_conn()
     cursor = conn.cursor()
@@ -238,7 +272,6 @@ WHERE
     conn.close()
     return rows
 
-# 16- list of all public health workers who tested positive on a specific date in a specific facility
 def get_workers_positive_test_at_facility(data):
     date_formatted = datetime.datetime.strptime(data['testDate'], '%Y-%m-%d')
     date_before = date_formatted - datetime.timedelta(days=14)
