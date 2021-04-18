@@ -13,7 +13,7 @@
       <template v-slot:top>
         <table-header
           title="Health Care Centers"
-          @create="isManagingHospital = true"
+          @create="createHospital"
           create-tooltip="create new center"
           :hide-add-button="readOnly"
         >
@@ -65,7 +65,7 @@
 <script lang="ts">
 import ManageHospital from './ManageHospital.vue';
 import { HealthCareCenter } from 'src/components/models';
-import TableHeader from 'src/components/TableHeader.vue'
+import TableHeader from 'src/components/TableHeader.vue';
 import Vue from 'vue';
 
 export default Vue.extend({
@@ -75,10 +75,12 @@ export default Vue.extend({
       type: Boolean
     }
   },
-  mounted() {
-    this.componentReady = true;
-    this.hospitals = []
+  async mounted() {
+    await this.$axios
+      .get('/facilities/')
+      .then(Response => (this.hospitals = Response.data as HealthCareCenter[]));
     this.loading = false;
+    this.componentReady = true;
   },
   data() {
     return {
@@ -183,12 +185,26 @@ export default Vue.extend({
   },
   methods: {
     saveHospital(hospital: HealthCareCenter) {
-      console.log(hospital)
-      this.isManagingHospital = false
+      console.log(hospital);
+      this.isManagingHospital = false;
+    },
+    createHospital() {
+      this.localHospital = {
+        id: -1,
+        name: null,
+        address: null,
+        webAddress: null,
+        phoneNumber: null,
+        type: null,
+        city: null,
+        province: null,
+        country: null,
+        driveThru: null
+      }
+      this.isManagingHospital = true
     },
     editHospital(row: HealthCareCenter) {
       this.localHospital = row;
-      console.log(this.localHospital);
       this.isManagingHospital = true;
     },
     deleteHospital(row: HealthCareCenter) {

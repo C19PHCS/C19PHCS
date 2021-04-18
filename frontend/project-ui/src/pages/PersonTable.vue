@@ -75,32 +75,11 @@ export default Vue.extend({
       type: Boolean
     }
   },
-  mounted() {
+  async mounted() {
+    await this.$axios
+      .get('/general/person/get_all')
+      .then(Response => (this.people = Response.data as Person[]));
     this.componentReady = true;
-    this.people = [
-      {
-        medicareNumber: '123abc',
-        lastName: 'lastname',
-        firstName: 'firstname',
-        address: 'address',
-        phoneNumber: 'phone',
-        email: 'email',
-        dateOfBirth: 'dateOFbirth',
-        city: 'city',
-        province: 'province'
-      },
-      {
-        medicareNumber: '123abc2',
-        lastName: 'lastname2',
-        firstName: 'firstname2',
-        address: 'address2',
-        phoneNumber: 'phone2',
-        email: 'email2',
-        dateOfBirth: 'dateOFbirth2',
-        city: 'city2',
-        province: 'province2'
-      }
-    ];
     this.loading = false;
   },
   data() {

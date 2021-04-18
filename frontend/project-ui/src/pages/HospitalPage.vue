@@ -1,6 +1,6 @@
 <template>
   <q-page class="row items-center justify-evenly">
-    <div style="max-width: 1100px">
+    <div style="max-width: 1400px">
       <hospital-table :readOnly="false"/>
     </div>
   </q-page>
