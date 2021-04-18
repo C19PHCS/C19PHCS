@@ -49,13 +49,13 @@
           </template>
     </q-table>
     <q-dialog v-model="isManagingWorker">
-      <manage-public-health-worker :person="localWorker"/>
+      <manage-public-health-worker :worker="localWorker"/>
     </q-dialog> 
   </div>
 </template>
 
 <script lang="ts">
-import ManagePublicHealthWorker from './ManagePerson.vue';
+import ManagePublicHealthWorker from './ManageHealthCareWorker.vue';
 import { PublicHealthWorker } from 'src/components/models';
 import TableHeader from 'src/components/TableHeader.vue'
 import Vue from 'vue';
@@ -180,5 +180,3 @@ export default Vue.extend({
   }
 });
 </script>
-
-    ManagePerson

@@ -2,7 +2,7 @@
   <q-card style="min-width: 600px" class="no-border">
     <q-card-section class="flex text-white bg-primary">
       <div class="text-h6">
-        Manage Health Care Worker
+        Manage Health Care Center
       </div>
       <q-space />
       <q-btn flat size="sm" v-close-popup round icon="close" />
@@ -11,79 +11,72 @@
       <div class="person-card-flex q-gutter-sm">
         <q-input
           style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.medicareNumber"
+          v-model="localHospital.name"
           dense
           outlined
           required
-          label="Medicare Number *"
+          label="Name *"
         />
         <q-input
           style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.firstName"
-          dense
-          outlined
-          label="First Name *"
-        />
-        <q-input
-          style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.lastName"
-          dense
-          outlined
-          label="Last Name *"
-        />
-        <q-input
-          style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.phoneNumber"
-          dense
-          outlined
-          label="Phone Number *"
-        />
-        <q-input
-          style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.email"
-          dense
-          outlined
-          label="Email *"
-        />
-        <q-input
-          style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.province"
-          dense
-          outlined
-          label="Province *"
-        />
-        <q-input
-          style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.city"
-          dense
-          outlined
-          label="City *"
-        />
-        <q-input
           class="address-input"
-          style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.address"
+          v-model="localHospital.address"
           dense
           outlined
           label="Address *"
         />
         <q-input
           style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.workerId"
+          v-model="localHospital.webAddress"
           dense
           outlined
-          label="Worker Id *"
+          label="Web Address *"
         />
         <q-input
           style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.publicHealthCareCenterId"
+          v-model="localHospital.type"
           dense
           outlined
-          label="Center Id *"
+          label="Type *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localHospital.phoneNumber"
+          dense
+          outlined
+          label="Phone number *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localHospital.country"
+          dense
+          outlined
+          label="Country *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localHospital.province"
+          dense
+          outlined
+          label="Province *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localHospital.city"
+          dense
+          outlined
+          label="City *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localHospital.driveThru"
+          dense
+          outlined
+          label="Drive Thru *"
         />
       </div>
     </q-card-section>
-    <q-form @submit="confirmSaveHealthCareWorker">
+    <q-form @submit="confirmSaveHospital">
       <div style="min-height: 50px;">
         <q-card-actions align="right">
           <q-btn flat color="primary" label="Cancel" v-close-popup />
@@ -96,31 +89,31 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { PublicHealthWorker } from './models';
+import { HealthCareCenter } from './models';
 
 export default Vue.extend({
-  name: 'ManageHealthCareWorker',
+  name: 'ManagePerson',
   mounted() {
     this.componentReady = true;
-    this.localHealthCareWorker = JSON.parse(JSON.stringify(this.localHealthCareWorker)) as PublicHealthWorker;
+    this.localHospital = JSON.parse(JSON.stringify(this.hospital)) as HealthCareCenter;
   },
   data() {
     return {
-      localHealthCareWorker: {} as PublicHealthWorker,
+      localHospital: {} as HealthCareCenter,
       componentReady: false
     };
   },
   props: {
-    worker: {
-      type: Object as () => PublicHealthWorker
+    hospital: {
+      type: Object as () => HealthCareCenter
     },
     readOnly: {
       type: Boolean
     }
   },
   methods: {
-    confirmSaveHealthCareWorker() {
-      console.log(this.worker);
+    confirmSaveHospital() {
+      this.$emit('save', this.localHospital)
     }
   },
   components: {}

@@ -60,13 +60,13 @@ const linksData = [
     title: 'Hospitals',
     caption: '',
     icon: 'house',
-    link: ''
+    link: '#/healthcenter'
   },
   {
     title: 'Region',
     caption: '',
     icon: 'map',
-    link: ''
+    link: '#/regions'
   },
   {
     title: 'Public Health worker',
@@ -78,7 +78,7 @@ const linksData = [
     title: 'Group zone',
     caption: '',
     icon: 'group',
-    link: ''
+    link: '#/groupzones'
   }
 ];
 

@@ -27,10 +27,33 @@ export interface PublicHealthWorker {
   phoneNumber: string,
   email: string,
   address: string,
-  city: string,
+  city: string
   province: string
-  workerId: number | null;
-  publicHealthCareCenterId: number | null;
+  workerId: number | null
+  publicHealthCareCenterId: number | null
 }
+
+export interface HealthCareCenter {
+  id: number | null;
+  name: string | null;
+  address: string | null;
+  webAddress: string | null;
+  phoneNumber: string | null;
+  type: string | null
+  city: string | null
+  province: string | null
+  country: string | null
+  driveThru: number | null
+}
+
+export interface GroupZone {
+  groupID: number|null
+  groupName: string
+}
+
+export interface Region {
+  name: string | null
+}
+
 
 

@@ -8,6 +8,9 @@ const routes: RouteConfig[] = [
       { path: '', component: () => import('pages/Index.vue') },
       { path: '/people', component: () => import('pages/PersonPage.vue') },
       { path: '/publichealthworker', component: () => import('pages/PublicHealthWorker.vue') },
+      { path: '/healthcenter', component: () => import('pages/HospitalPage.vue') },
+      { path: '/regions', component: () => import('pages/RegionPage.vue') },
+      { path: '/groupzones', component: () => import('pages/GroupZonePage.vue') },
     ]
   },
 
