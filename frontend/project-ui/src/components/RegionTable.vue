@@ -36,6 +36,15 @@
           </q-td>
           <q-td class="table-action-buttons">
             <q-btn
+              v-if="!readOnly"
+              flat
+              color="negative"
+              dense
+              @click="setAlertForRegion(props.row)"
+              icon="add_alert"
+              ><q-tooltip>Set Alert</q-tooltip></q-btn
+            >
+            <q-btn
               flat
               color="primary"
               dense
@@ -59,12 +68,16 @@
     <q-dialog v-model="isManagingRegion">
       <manage-region @save="saveRegion" :region="localRegion" />
     </q-dialog>
+    <q-dialog v-model="isManagingAlert">
+      <manage-alert @save="saveAlert" :read-only="false" :region="localRegion" />
+    </q-dialog>
   </div>
 </template>
 
 <script lang="ts">
 import ManageRegion from './ManageRegion.vue';
-import { Region } from 'src/components/models';
+import ManageAlert from './ManageAlert.vue'
+import { Alert, Region } from 'src/components/models';
 import TableHeader from 'src/components/TableHeader.vue'
 import Vue from 'vue';
 
@@ -77,7 +90,11 @@ export default Vue.extend({
   },
   mounted() {
     this.componentReady = true;
-    this.regions = []
+    this.regions = [
+      {
+        name: 'Montreal'
+      }
+    ]
     this.loading = false;
   },
   data() {
@@ -85,6 +102,7 @@ export default Vue.extend({
       componentReady: false,
       regions: [] as Region[],
       localRegion: {} as Region,
+      isManagingAlert: false,
       isManagingRegion: false,
       loading: true,
       columns: [
@@ -113,11 +131,19 @@ export default Vue.extend({
     deleteRegion(row: Region) {
       this.localRegion = row;
       console.log(row);
+    },
+    setAlertForRegion(row: Region) {
+      this.localRegion = row;
+      this.isManagingAlert = true
+    },
+    saveAlert(alert: Alert){
+      console.log(alert)
     }
   },
   components: {
     TableHeader,
-    ManageRegion
+    ManageRegion,
+    ManageAlert
   }
 });
 </script>

@@ -55,5 +55,10 @@ export interface Region {
   name: string | null
 }
 
+export interface Alert {
+  regionName: string | null
+  date: string | null
+  alertLevelId: number | null
+}
 
 
