@@ -1,9 +1,13 @@
-from database import get_conn
+from flask import Flask, request, jsonify
 import datetime
 
-def get_single(table, data):
-    conn = get_conn()
-    cursor = conn.cursor()
+from database import conn
+
+def get_single(table, data, json=False, **kwargs):
+    if table is None or data is None:
+        return {"response": "failed", "reason": "query failed"}
+
+    conn.connect()
     
     temp = ""
     for k, v in data.items():
@@ -13,27 +17,35 @@ def get_single(table, data):
             temp += "{} = {} and ".format(k, v)
     temp = temp[:-5]
 
-    query = ("SELECT * FROM {} WHERE {};").format(table, temp)
+    query = ("SELECT * FROM {} WHERE {}").format(table, temp)
 
-    cursor.execute(query)
+    conn.cursor.execute(query)
+    if json:
+        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+    else:
+        return conn.cursor.fetchall()
 
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-    cursor.close()
-    conn.commit()
-    conn.close()
+def get_all(table, json=False, **kwargs):
+    if table is None:
+        return {"response": "failed", "reason": "query failed"}
+    conn.connect()
 
-    return rows
+    query = (f"SELECT * FROM {table}")
+    conn.cursor.execute(query)
+    if json:
+        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+    else:
+        return conn.cursor.fetchall()
 
 
 def exists(table, data):
     res = get_single(table, data)
     return len(res) != 0
 
-def create(table, data):
-    conn = get_conn()
-    cursor = conn.cursor()
+
+def action_create(table, data, **kwargs):
+    conn.connect()
 
     temp = ""
     values = ""
@@ -45,37 +57,17 @@ def create(table, data):
 
     query = ("INSERT INTO {} ({}) VALUES ({});").format(table, temp, values)
 
-    cursor.execute(query)
-    res = cursor.lastrowid
-    cursor.close()
-    conn.commit()
-    conn.close()
+    conn.cursor.execute(query)
+    conn.cnx.commit()
 
-    return res
+    return conn.cursor.lastrowid
 
-def get_all(table):
-    conn = get_conn()
-    cursor = conn.cursor()
-    query = ("SELECT * FROM {};").format(table)
 
-    cursor.execute(query)
-
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-    cursor.close()
-    conn.commit()
-    conn.close()
-
-    return rows
-
-def delete(table, data):
+def action_delete(table, data, **kwargs):
+    conn.connect()
 
     if not exists(table, data):
-        return True
-
-    conn = get_conn()
-    cursor = conn.cursor()
+        return {"response": "failed", "reason": "data exists"}
 
     temp = ""
     for k, v in data.items():
@@ -86,14 +78,11 @@ def delete(table, data):
     temp = temp[:-5]
 
     query = ("DELETE FROM {} WHERE {};").format(table, temp)
+    conn.cursor.execute(query)
+    conn.cnx.commit()
 
-    cursor.execute(query)
+    return {"response": "sucess"}
 
-    cursor.close()
-    conn.commit()
-    conn.close()
-
-    return True
 
 primary_keys = {
     'person' : ['medicareNumber'],
@@ -105,7 +94,10 @@ primary_keys = {
     'healthRecommendationSecondary': ['id', 'recommendation']
 }
 
-def edit(table, data):
+
+def action_edit(table, data, **kwargs):
+    conn.connect()
+
     ids = {}
     datas = {}
 
@@ -116,10 +108,7 @@ def edit(table, data):
             datas[key] = value
 
     if not exists(table, ids):
-        return False
-
-    conn = get_conn()
-    cursor = conn.cursor()
+        return {"response": "failed", "reason": "data doesn't exist"}
 
     temp = ""
     for k, v in datas.items():
@@ -139,41 +128,34 @@ def edit(table, data):
 
     query = ("UPDATE {} SET {} WHERE {};").format(table, temp, temp2)
     
-    cursor.execute(query)
+    conn.cursor.execute(query)
+    conn.cnx.commit()
 
-    cursor.close()
-    conn.commit()
-    conn.close()
+    return {"response": "success"}
 
-    return True
 
 # 7- set new alert for a specific region
-def get_previous_alert(data):
-    conn = get_conn()
-    cursor = conn.cursor()
+def get_previous_alert(region_name):
+    conn.connect()
 
-    query = ("""SELECT DISTINCT alertLevel, date
-FROM alert
-WHERE regionName = '{}'
-ORDER BY date DESC
-LIMIT 1""").format(data)
+    query = (
+        f"""SELECT DISTINCT alertLevel, date
+            FROM alert
+            WHERE regionName = '{region_name}'
+            ORDER BY date DESC
+            LIMIT 1
+        """)
 
-    cursor.execute(query)
+    conn.cursor.execute(query)
 
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    resp = conn.cursor.fetchall()
+    if conn.cursor is not None:
+        return conn.cursor['alertLevel']
 
-    cursor.close()
-    conn.commit()
-    conn.close()
-
-    temp = 0
-    for i in rows:
-        temp = i['alertLevel']
-
-    return temp
 
 def set_region_alert(data):
+    conn.connect()
+
     previous_alert = get_previous_alert(data['regionName'])
 
     if data['alertLevel'] <= 0 or data['alertLevel'] > 4:
@@ -182,7 +164,9 @@ def set_region_alert(data):
     if (data['alertLevel'] + 1 is not previous_alert) and (data['alertLevel'] - 1 is not previous_alert):
         raise Exception('cannot set alert to this level')
 
-    create('alert', data)
+    action_create('alert', data)
+    return {"response": "success"}
+
 
 # 13- list of all regions
 def get_regions():
@@ -201,145 +185,127 @@ def get_regions():
 
     return rows
 
+
 # 14- list of people who got the result of the test on a specific date
 def get_test_result_on_date(data):
-    conn = get_conn()
-    cursor = conn.cursor()
+    conn = conn.connect()
+    conn.cursor = conn.conn.cursor()
     
-    query = ("""
-    SELECT P.firstName, P.lastName, P.dateOfBirth, P.phoneNumber, P.email, D.result
-FROM
-(SELECT medicareNumber, result
-FROM diagnostic
-WHERE testDate = '{}') as D, person as P
-WHERE P.medicareNumber = D.medicareNumber
-ORDER BY D.result DESC
-;""").format(data['testDate'])
+    query = (
+        f"""SELECT P.firstName, P.lastName, P.dateOfBirth, P.phoneNumber, P.email, D.result
+                FROM
+                (SELECT medicareNumber, result
+                    FROM diagnostic
+                    WHERE testDate = '{data['testDate']}') as D, person as P
+                WHERE P.medicareNumber = D.medicareNumber
+                ORDER BY D.result DESC
+        """)
 
-    cursor.execute(query)
+    conn.cursor.execute(query)
 
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
+    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
 
-    cursor.close()
-    conn.commit()
-    conn.close()
-
-    return rows
 
 # 15- list of workers in specific facility
-def get_workers_at_facility(data):
-    conn = get_conn()
-    cursor = conn.cursor()
+def get_workers_at_facility(facilityID):
+    conn.connect()
 
-    query = ("""SELECT P.firstName, P.lastName, PHW.workerID, PHW.medicareNumber, PHW.publicHealthCenterID
-FROM publicHealthWorker as PHW, person as P
-WHERE publicHealthCenterID = {} and PHW.medicareNumber = P.medicareNumber;""").format(data['publicHealthCenterID'])
+    query = (
+        f"""SELECT P.firstName, P.lastName, WHCM.healthWorkerID, P.medicareNumber, WHCM.healthCenterID
+            FROM pfc353_4.workerHealthCenterMapping as WHCM, pfc353_4.publicHealthWorker as PHW, pfc353_4.person as P
+            WHERE
+                healthCenterID = {facilityID} and
+                WHCM.healthWorkerID = PHW.workerID and
+                PHW.medicareNumber = P.medicareNumber and
+                WHCM.endDate is null
+        """)
 
-    cursor.execute(query)
+    conn.cursor.execute(query)
+    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
 
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-    cursor.close()
-    conn.commit()
-    conn.close()
-
-    return rows
 
 # 16- list of all public health workers who tested positive on a specific date in a specific facility
-def get_all_at_risk_workers(from_date, to_date, workerid):
-    conn = get_conn()
-    cursor = conn.cursor()
+def get_all_at_risk_workers(from_date, to_date, workerId):
+    conn.connect()
+    query = (
+        f"""SELECT DISTINCT PHW2.workerID, P.firstName, P.lastName
+            FROM workerSchedule as WS1, workerSchedule as WS2, publicHealthWorker as PHW2, person as P
+            WHERE
+                WS2.workerID <> {workerId} and
+                WS2.date between '{from_date}' and '{to_date}' and
+                WS1.workerID = {workerId} and
+                WS1.healthCenterID = WS2.healthCenterID and
+                WS2.workerID = PHW2.workerID and
+                PHW2.medicareNumber = P.medicareNumber;
+        """)
 
-    query = ("""SELECT DISTINCT PHW2.workerID, P.firstName, P.lastName
-FROM workerSchedule, publicHealthWorker as PHW1, publicHealthWorker as PHW2, person as P
-WHERE 
-	workerSchedule.workerID <> {} and 
-    `date` between "{}" and "{}" and 
-    PHW1.workerID = {} and
-    PHW2.workerID = workerSchedule.workerID and
-    PHW1.publicHealthCenterID = PHW2.publicHealthCenterID and
-    PHW2.medicareNumber = P.medicareNumber;""").format(workerid, from_date, to_date, workerid)
+    conn.cursor.execute(query)
+    return conn.cursor.fetchall() if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
 
-    cursor.execute(query)
-
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-    cursor.close()
-    conn.commit()
-    conn.close()
-    return rows
 
 def get_workers_positive_test_at_facility(data):
+    conn.connect()
+
     date_formatted = datetime.datetime.strptime(data['testDate'], '%Y-%m-%d')
     date_before = date_formatted - datetime.timedelta(days=14)
     date_before_str = date_before.strftime("%Y-%m-%d")
+    query = (
+        f"""SELECT workerID, P.firstName, P.lastName
+                FROM
+                (SELECT healthWorkerID
+                FROM workerHealthCenterMapping
+                WHERE healthCenterID = {data['healthCenterID']}) as WHCM, publicHealthWorker as PHW, diagnostic as D, person as P
+                WHERE 
+                    WHCM.healthWorkerID = PHW.workerID and
+                    D.testDate = '{data['testDate']}' and
+                    PHW.medicareNumber = P.medicareNumber
+        """)
 
-    conn = get_conn()
-    cursor = conn.cursor()
+    conn.cursor.execute(query)
 
-    query = ("""SELECT P.firstName, P.lastName, PHW.medicareNumber, PHW.workerID
-FROM
-(SELECT medicareNumber, workerID
-FROM publicHealthWorker
-WHERE publicHealthCenterID = {}) as PHW, diagnostic as D, person as P
-WHERE D.result = true and 
-D.testDate = '{}'and 
-PHW.medicareNumber = D.medicareNumber and 
-PHW.medicareNumber = P.medicareNumber;""").format(data['publicHealthCenterID'], data['testDate'])
+    resp = conn.cursor.fetchall()
 
-    cursor.execute(query)
-
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-    cursor.close()
-    conn.commit()
-    conn.close()
+    if resp is None:
+        return {"response": "failed", "reason": "query failed"}
 
     res = []
-    for worker in rows:
+    for worker in resp:
         temp = {}
         temp['sickWorker'] = worker
         workerid = worker['workerID']
         temp['atRiskWorkers'] = get_all_at_risk_workers(date_before_str, data['testDate'], workerid)
         res.append(temp)
 
-    return res
+    return jsonify(res)
 
 # 17- report for each region
 def get_all_region_reports():
-    conn = get_conn()
-    cursor = conn.cursor()
+    conn.connect()
 
-    query = ("""SELECT negative_count.regionName, positive_count.count as positiveCount, negative_count.count as negativeCount
-FROM 
-(SELECT count(P.medicareNumber) as count, D.result, C.regionName
-FROM diagnostic as D, person as P, city as C
-WHERE 
-    D.result = true and
-    D.medicareNumber = P.medicareNumber and
-    P.city = C.`name`
-GROUP BY D.result, C.regionName) as positive_count,
-(SELECT count(P.medicareNumber) as count, D.result, C.regionName
-FROM diagnostic as D, person as P, city as C
-WHERE 
-    D.result = false and
-    D.medicareNumber = P.medicareNumber and
-    P.city = C.`name`
-GROUP BY D.result, C.regionName) as negative_count
-WHERE negative_count.regionName = positive_count.regionName;""")
+    query = (
+        """SELECT negative_count.regionName, positive_count.count as positiveCount, negative_count.count as negativeCount
+                FROM 
+                (SELECT count(P.medicareNumber) as count, D.result, C.regionName
+                FROM diagnostic as D, person as P, city as C
+                WHERE 
+                    D.result = true and
+                    D.medicareNumber = P.medicareNumber and
+                    P.city = C.`name`
+                GROUP BY D.result, C.regionName) as positive_count,
+                (SELECT count(P.medicareNumber) as count, D.result, C.regionName
+                FROM diagnostic as D, person as P, city as C
+                WHERE 
+                    D.result = false and
+                    D.medicareNumber = P.medicareNumber and
+                    P.city = C.`name`
+                GROUP BY D.result, C.regionName) as negative_count
+                WHERE negative_count.regionName = positive_count.regionName;
+        """)
 
-    cursor.execute(query)
+    conn.cursor.execute(query)
 
-    columns = [col[0] for col in cursor.description]
-    rows = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-    cursor.close()
-    conn.commit()
-    conn.close()
+    columns = [col[0] for col in conn.cursor.description]
+    rows = [dict(zip(columns, row)) for row in conn.cursor.fetchall()]
 
     for report in rows:
         alerts = get_single('alert', {'regionName' : report['regionName']})
@@ -350,23 +316,27 @@ WHERE negative_count.regionName = positive_count.regionName;""")
 
     return rows
 
+
+actions = {
+    "POST": {
+        "action_create": action_create,
+        "action_delete": action_delete,
+        "action_edit": action_edit,
+    },
+    "GET": {
+        "get_single": get_single,
+        "get_all": get_all,
+    },
+}
+
+
 def perform_action(action, table, data):
     table_list = ['person', 'publicHealthWorker', 'publicHealthCenter', 'region', 'groupZone', 'groupZoneMapping', 'diagnostic', 'healthRecommendation', 'healthRecommendationSecondary', 'message']
 
     if table not in table_list:
         raise Exception('invalid table')
 
-    if action == 'get_single':
-        return get_single(table, data)
-    
-    if action == 'get_all':
-        return get_all(table)
-
-    if action == 'create':
-        return create(table, data)
-
-    if action == 'delete':
-        return delete(table, data)
-
-    if action == 'edit':
-        return edit(table, data)
+    try:
+        return actions[request.method][action](table=table, data=data, json=True)
+    except Exception as e:
+        return str(e)
