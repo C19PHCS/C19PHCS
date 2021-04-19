@@ -11,6 +11,7 @@ const routes: RouteConfig[] = [
       { path: '/healthcenter', component: () => import('pages/HospitalPage.vue') },
       { path: '/regions', component: () => import('pages/RegionPage.vue') },
       { path: '/groupzones', component: () => import('pages/GroupZonePage.vue') },
+      { path: '/surveys', component: () => import('pages/SymptomsPage.vue') },
     ]
   },
 

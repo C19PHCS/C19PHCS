@@ -79,6 +79,12 @@ const linksData = [
     caption: '',
     icon: 'group',
     link: '#/groupzones'
+  },
+  {
+    title: 'Symptoms',
+    caption: '',
+    icon: 'note',
+    link: '#/surveys'
   }
 ];
 

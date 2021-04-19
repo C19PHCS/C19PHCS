@@ -39,6 +39,14 @@
               flat
               color="primary"
               dense
+              @click="viewWorkers(props.row)"
+              icon="person"
+              ><q-tooltip>Edit Center</q-tooltip></q-btn
+            >
+            <q-btn
+              flat
+              color="primary"
+              dense
               @click="editHospital(props.row)"
               icon="edit"
               ><q-tooltip>Edit Center</q-tooltip></q-btn
@@ -59,6 +67,9 @@
     <q-dialog v-model="isManagingHospital">
       <manage-hospital @save="saveHospital" :hospital="localHospital" />
     </q-dialog>
+    <q-dialog v-model="isViewingWorkers">
+      <view-workers :public-health-center="localHospital" />
+    </q-dialog>
   </div>
 </template>
 
@@ -67,6 +78,7 @@ import ManageHospital from './ManageHospital.vue';
 import { HealthCareCenter } from 'src/components/models';
 import TableHeader from 'src/components/TableHeader.vue';
 import Vue from 'vue';
+import ViewWorkers from './ViewWorkers.vue';
 
 export default Vue.extend({
   name: 'PersonTable',
@@ -87,6 +99,7 @@ export default Vue.extend({
       componentReady: false,
       hospitals: [] as HealthCareCenter[],
       localHospital: {} as HealthCareCenter,
+      isViewingWorkers: false,
       isManagingHospital: false,
       loading: true,
       columns: [
@@ -121,15 +134,6 @@ export default Vue.extend({
           name: 'Phone Number',
           required: true,
           label: 'Phone Number',
-          align: 'left',
-          headerStyle: 'width: 17vw',
-          field: (row: HealthCareCenter) => row.phoneNumber,
-          sortable: true
-        },
-        {
-          name: 'Phone number',
-          required: true,
-          label: 'Phone number',
           align: 'left',
           headerStyle: 'width: 17vw',
           field: (row: HealthCareCenter) => row.phoneNumber,
@@ -188,6 +192,10 @@ export default Vue.extend({
       console.log(hospital);
       this.isManagingHospital = false;
     },
+    viewWorkers(row: HealthCareCenter) {
+      this.localHospital = row
+      this.isViewingWorkers = true
+    },
     createHospital() {
       this.localHospital = {
         id: -1,
@@ -214,7 +222,8 @@ export default Vue.extend({
   },
   components: {
     TableHeader,
-    ManageHospital
+    ManageHospital,
+    ViewWorkers
   }
 });
 </script>
