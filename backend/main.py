@@ -1,6 +1,7 @@
 from dotenv import load_dotenv, dotenv_values
 from flask import Flask, request, jsonify
 from mysql.connector import connection, cursor
+from flask_cors import CORS
 
 from config import config
 from general_functions import *
@@ -11,6 +12,7 @@ cursor = None
 
 app = Flask(__name__)
 app.config["DEBUG"] = True
+CORS(app, resources={r'/*': {'origins': '*'}})
 
 
 def action_create(request, **kwargs):
