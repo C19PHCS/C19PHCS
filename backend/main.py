@@ -98,9 +98,9 @@ def sypmtoms():
         return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
 
     query = (
-        f"SELECT * FROM surveys "
+        f"SELECT * FROM followUpForm "
         f"WHERE medicareNumber = \"{data['medicareNumber']}\" "
-        f"AND date > '{data['date']}' "
+        f"AND date >= '{data['date']}' "
     )
     # cursor.execute(query)
     return {"response": "success"}
@@ -122,7 +122,7 @@ def messages():
         return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
 
     query = (
-        f"SELECT * FROM messages "
+        f"SELECT * FROM message "
         f"WHERE dateTime > \"{data['startDateTime']}\" "
         f"AND dateTime < \"{data['endDateTime']}\" "
     )
@@ -162,6 +162,7 @@ def people_at_address():
 def facilities():
     ensure_db()
     query = "SELECT * FROM publicHealthCenter"
+    print(get_date())
     cursor.execute(query)
     return jsonify(cursor.fetchall()) if cursor is not None else {"response": "failed", "reason": "query failed"}
 

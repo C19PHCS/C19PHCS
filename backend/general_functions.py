@@ -370,3 +370,16 @@ def perform_action(action, table, data):
 
     if action == 'edit':
         return edit(table, data)
+
+def get_date():
+    conn = get_conn()
+    cursor = conn.cursor()
+
+    query = ("""
+SELECT MAX(date) FROM currentDate;
+        """)
+
+    # cursor.execute(query)
+    # date = cursor.fetchall()['date']
+
+    # return date
