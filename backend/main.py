@@ -11,150 +11,42 @@ app = Flask(__name__)
 app.config["DEBUG"] = True
 CORS(app, resources={r'/*': {'origins': '*'}})
 
-
 @app.route('/', methods=['GET'])
 def home():
     return "hello world"
 
-
-@app.route('/general/<table>/<action>', methods=['GET', 'POST'])
-def actions(table, action):
-    return perform_action(action, table, request.get_json())
-
+# 1-7. create/edit/delete
+app.route('/general/<table>/<action>/', methods=['GET', 'POST'])(perform_action)
 
 # 8 and 9. store or get survey
-@app.route("/survey/<string:action>/", methods=["POST"])
-def survey(action):
-    conn.connect()
-    if action == "store":
-        required = [
-            "medicare",
-            "dateOfBirth",
-            "time",
-            "temperature",
-            "symptoms",
-        ]
-
-        data = request.get_json()
-
-        if any(x not in data for x in required):
-            return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
-
-        query = "SELECT * FROM "
-        conn.cursor.execute(query)
-        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
-    elif action == "get":
-        required = [
-            "medicareNumber",
-            "date",
-        ]
-
-        data = request.get_json()
-
-        if any(x not in data for x in required):
-            return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
-
-        query = (
-            f"SELECT * FROM followUpForm "
-            f"WHERE medicareNumber = \"{data['medicareNumber']}\" "
-            f"AND date > '{data['date']}' "
-        )
-
-        conn.cursor.execute(query)
-        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
-
+app.route("/survey/<string:action>/", methods=["POST"])(survey)
 
 # 10. get messages within time period
-@app.route("/messages/", methods=["GET"])
-def messages():
-    conn.connect()
-
-    required = [
-        "startDateTime",
-        "endDateTime",
-    ]
-
-    data = request.get_json()
-
-    if any(x not in data for x in required):
-        return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
-
-    query = (
-        f"SELECT * FROM messages "
-        f"WHERE dateTime > \"{data['startDateTime']}\" "
-        f"AND dateTime < \"{data['endDateTime']}\" "
-    )
-    # conn.cursor.execute(query)
-    return {"response": "success"}
-
+app.route("/messages/", methods=["GET"])(messages)
 
 # 11. People at address
-@app.route("/people-at-address/", methods=["GET"])
-def people_at_address():
-    conn.connect()
-
-    required = [
-        "address",
-        "city",
-        "province",
-        "postalCode",
-        "country",
-    ]
-
-    data = request.get_json()
-
-    if any(x not in data for x in required):
-        return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
-
-    query = ("SELECT * FROM person WHERE ") + " AND ".join(
-        [f"{key}='{data[key]}'" for key in required]
-    )
-
-    conn.cursor.execute(query)
-    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
-
+app.route("/people-at-address/", methods=["GET"])(people_at_address)
 
 # 12. get all facility details
-@app.route("/facilities/", methods=["GET"])
-def facilities():
-    conn.connect()
-    query = "SELECT * FROM publicHealthCenter"
-    conn.cursor.execute(query)
-    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+app.route("/facilities/", methods=["GET"])(facilities)
 
+# 13. list of all regions
+app.route('/region/info/', methods=['GET'])(get_all_regions)
 
-@app.route('/region/info/', methods=['GET'])
-def get_all_regions():
-    return jsonify(get_regions())
+# 14. list of people who got the result of the test on a specific date
+app.route('/test-results-on-date/', methods=['POST'])(get_all_test_results_on_specific_date)
 
+# 15- list of workers in specific facility
+app.route('/workers-at-facility/<int:facilityID>/', methods=['GET'])(get_all_workers_at_facility)
 
-@app.route('/region/report/', methods=['GET'])
-def get_region_reports():
-    return jsonify(get_all_region_reports())
+# 16. all positive workers at a facility
+app.route('/workers-positive-test/', methods=['POST'])(get_workers_positive_at_facility)
 
+# 17. report for each region
+app.route('/region/report/', methods=['GET'])(get_region_reports)
 
-@app.route('/test-results-on-date/', methods=['POST'])
-def get_all_test_results_on_specific_date():
-    data = request.get_json()
-    return get_test_result_on_date(data)
-
-
-@app.route('/workers-at-facility/<int:facilityID>/', methods=['GET'])
-def get_all_workers_at_facility(facilityID):
-    data = request.get_json()
-    return get_workers_at_facility(facilityID)
-
-
-@app.route('/workers-positive-test/', methods=['POST'])
-def get_workers_positive_at_facility():
-    data = request.get_json()
-    return get_workers_positive_test_at_facility(data)
-
-
-@app.route('/set-region-alert/', methods=['POST'])
-def set_alert_for_region():
-    data = request.get_json()
-    return set_region_alert(data)
+# set alert for a given region
+app.route('/set-region-alert/', methods=['POST'])(set_alert_for_region)
 
 
 def on_starting(server):
