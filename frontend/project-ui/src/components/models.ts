@@ -66,6 +66,12 @@ export interface Alert {
   alertLevelId: number | null
 }
 
+export interface AlertTable {
+  regionName: string | null
+  alertLevelId: number | null
+  date: Date
+}
+
 export interface Survey {
   medicareNumber: string | null
   dateTime: Date | null
@@ -122,6 +128,20 @@ export interface Messages {
   healthRecomendation: string
   description: string
   testResult: boolean
+}
+
+export interface PeopleAtAddress {
+  citizenship: string
+  dateOfbirth: Date
+  email: string
+  fatherFirstName: string
+  fatherLastName: string
+  firstName: string
+  lastName: string
+  medicareNumber: string
+  motherFirstName: string
+  motherLastName: string
+  phoneNumber: string
 }
 
 

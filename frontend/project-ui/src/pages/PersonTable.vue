@@ -39,6 +39,14 @@
               flat
               color="primary"
               dense
+              @click="viewPeopleAtAddress(props.row)"
+              icon="map"
+              ><q-tooltip>View People at this address</q-tooltip></q-btn
+            >
+            <q-btn
+              flat
+              color="primary"
+              dense
               @click="viewSurvey(props.row)"
               icon="summarize"
               ><q-tooltip>View Survey</q-tooltip></q-btn
@@ -129,6 +137,7 @@ export default Vue.extend({
       isViewingSurvey: false,
       isManagingPerson: false,
       isManagingSurvey: false,
+      isViewingAddress: false,
       loading: true,
       columns: [
         {
@@ -209,6 +218,10 @@ export default Vue.extend({
         .post('/survey/store/', survey)
         .then(Response => console.log(Response.data));
       this.isManagingSurvey = false;
+    },
+    viewPeopleAtAddress(row: Person){
+      this.localPerson = row;
+      this.isViewingAddress = true
     },
     addSurvey(row: Person) {
       this.localPerson = row;

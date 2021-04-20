@@ -79,6 +79,12 @@ const linksData = [
     caption: '',
     icon: 'group',
     link: '#/groupzones'
+  },
+  {
+    title: 'Alerts',
+    caption: '',
+    icon: 'notifications',
+    link: '#/alerts'
   }
 ];
 

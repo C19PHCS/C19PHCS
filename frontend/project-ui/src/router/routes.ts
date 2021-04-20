@@ -10,7 +10,8 @@ const routes: RouteConfig[] = [
       { path: '/messages', component: () => import('pages/MessagesPage.vue') },
       { path: '/healthcenter', component: () => import('pages/HospitalPage.vue') },
       { path: '/regions', component: () => import('pages/RegionPage.vue') },
-      { path: '/groupzones', component: () => import('pages/GroupZonePage.vue') }
+      { path: '/groupzones', component: () => import('pages/GroupZonePage.vue') },
+      { path: '/alerts', component: () => import('pages/AlertPage.vue') }
     ]
   },
 
