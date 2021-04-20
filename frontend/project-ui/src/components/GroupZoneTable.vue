@@ -116,6 +116,10 @@ export default Vue.extend({
           .post('/general/groupZone/create/', zone)
           .then(Response => (console.log(Response.data)));
       }
+      this.$q.notify({
+        type: 'positive',
+        message: 'Success'
+      })
       this.$emit('refresh')
       this.isManagingGroupZone = false
     },
@@ -132,6 +136,10 @@ export default Vue.extend({
       await this.$axios
           .post('/general/groupZone/delete/', data)
           .then(Response => (console.log(Response.data)));
+      this.$q.notify({
+        type: 'negative',
+        message: 'Deleted'
+      })
       this.$emit('refresh')
       console.log(row);
     }

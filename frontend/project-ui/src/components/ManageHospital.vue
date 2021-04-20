@@ -69,6 +69,20 @@
         />
         <q-input
           style="margin-bottom: 20px"
+          v-model="localHospital.postalCode"
+          dense
+          outlined
+          label="Postal Code *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localHospital.testingType"
+          dense
+          outlined
+          label="Testing type *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
           v-model="localHospital.driveThru"
           dense
           outlined

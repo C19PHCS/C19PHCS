@@ -201,6 +201,10 @@ export default Vue.extend({
           .post('/general/publicHealthCenter/create/', hospital)
           .then(Response => (console.log(Response.data)));
       }
+      this.$q.notify({
+        type: 'positive',
+        message: 'Success'
+      })
       this.$emit('refresh')
       this.isManagingHospital = false;
 
@@ -224,6 +228,10 @@ export default Vue.extend({
       await this.$axios
           .post('/general/publicHealthCenter/delete/', data)
           .then(Response => (console.log(Response.data)));
+          this.$q.notify({
+        type: 'negative',
+        message: 'Delete'
+      })
       this.$emit('refresh')
     }
   },

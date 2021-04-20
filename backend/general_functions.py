@@ -53,7 +53,7 @@ def exists(table, data):
     return len(res) != 0
 
 
-def action_create(table, data, **kwargs):
+def action_create(table, data,  **kwargs):
     conn.connect()
 
     temp = ""
@@ -69,7 +69,7 @@ def action_create(table, data, **kwargs):
     conn.cursor.execute(query)
     conn.cnx.commit()
 
-    return conn.cursor.lastrowid
+    return {"response": "success", "reason": "data exists"}
 
 
 def action_delete(table, data, **kwargs):

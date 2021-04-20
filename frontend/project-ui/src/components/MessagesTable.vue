@@ -4,8 +4,6 @@
       <div class="text-h6">
         Search For Messages
       </div>
-      <q-space />
-      <q-btn flat size="sm" v-close-popup round icon="close" />
     </q-card-section>
     <q-card-section>
       <div class="person-card-flex q-gutter-sm">

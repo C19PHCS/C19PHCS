@@ -33,6 +33,15 @@
         />
         <q-input
           style="margin-bottom: 20px"
+          v-model="localPerson.dateOfBirth"
+          dense
+          type="date"
+          outlined
+          required
+          label="Date of birth *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
           v-model="localPerson.phoneNumber"
           dense
           outlined
@@ -60,12 +69,47 @@
           label="City *"
         />
         <q-input
+          style="margin-bottom: 20px"
+          v-model="localPerson.postalCode"
+          dense
+          outlined
+          label="Postal code *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localPerson.country"
+          dense
+          outlined
+          label="Country *"
+        />
+        <q-input
           class="address-input"
           style="margin-bottom: 20px"
           v-model="localPerson.address"
           dense
           outlined
           label="Address *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localPerson.citizenShip"
+          dense
+          outlined
+          label="Citizenship *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localPerson.motherMedicare"
+          dense
+          outlined
+          label="Mother medicare number *"
+        />
+        <q-input
+          style="margin-bottom: 20px"
+          v-model="localPerson.fatherMedicare"
+          dense
+          outlined
+          label="Father medicare number *"
         />
       </div>
     </q-card-section>

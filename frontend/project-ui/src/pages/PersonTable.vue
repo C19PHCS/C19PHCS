@@ -83,6 +83,9 @@
     <q-dialog style="min-width: 1000px" v-model="isViewingSurvey">
       <symptom :person="localPerson" />
     </q-dialog>
+    <q-dialog style="min-width: 1000px" v-model="isViewingAddress">
+      <view-people-at-address :person="localPerson" />
+    </q-dialog>
     <q-dialog v-model="isManagingSurvey">
       <manage-survey @save="saveSurvey" :symptoms="localSymptoms" :person="localPerson" />
     </q-dialog>
@@ -99,6 +102,7 @@ import TableHeader from 'src/components/TableHeader.vue';
 import Vue from 'vue';
 import Symptom from 'src/components/Symptom.vue';
 import ManageSurvey from 'src/components/ManageSurvey.vue'
+import ViewPeopleAtAddress from 'src/components/ViewPeopleAtAddress.vue';
 
 export default Vue.extend({
   name: 'PersonTable',
@@ -209,6 +213,10 @@ export default Vue.extend({
           .post('/general/person/create/', person)
           .then(Response => console.log(Response.data));
       }
+      this.$q.notify({
+        type: 'positive',
+        message: 'Success'
+      })
       this.isManagingPerson = false;
       this.$emit('refresh');
     },
@@ -217,6 +225,10 @@ export default Vue.extend({
       await this.$axios
         .post('/survey/store/', survey)
         .then(Response => console.log(Response.data));
+        this.$q.notify({
+        type: 'positive',
+        message: 'Success'
+      })
       this.isManagingSurvey = false;
     },
     viewPeopleAtAddress(row: Person){
@@ -242,15 +254,21 @@ export default Vue.extend({
         medicareNumber: row.medicareNumber
       };
       await this.$axios
-        .post('/general/person/delete', data)
+        .post('/general/person/delete/', data)
         .then(Response => console.log(Response.data));
+        this.$q.notify({
+        type: 'negative',
+        message: 'Deleted'
+      })
+        this.$emit('refresh')
     }
   },
   components: {
     TableHeader,
     ManagePerson,
     ManageSurvey,
-    Symptom
+    Symptom,
+    ViewPeopleAtAddress
   }
 });
 </script>

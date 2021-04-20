@@ -25,7 +25,7 @@ app.route("/survey/<string:action>/", methods=["POST"])(survey)
 app.route("/messages/", methods=["POST"])(messages)
 
 # 11. People at address
-app.route("/people-at-address/", methods=["GET"])(people_at_address)
+app.route("/people-at-address/", methods=["POST"])(people_at_address)
 
 # 12. get all facility details
 app.route("/facilities/", methods=["GET"])(facilities)

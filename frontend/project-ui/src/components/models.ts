@@ -50,6 +50,7 @@ export interface HealthCareCenter {
   country: string | null
   driveThru: number | null
   postalCode: string | null
+  testingType: string
 }
 
 export interface GroupZone {
@@ -59,16 +60,17 @@ export interface GroupZone {
 
 export interface Region {
   name: string | null
+  alertLevel: number | null
 }
 
 export interface Alert {
   regionName: string | null
-  alertLevelId: number | null
+  alertLevel: number
 }
 
 export interface AlertTable {
   regionName: string | null
-  alertLevelId: number | null
+  alertLevel: number | null
   date: Date
 }
 
@@ -144,4 +146,8 @@ export interface PeopleAtAddress {
   phoneNumber: string
 }
 
+export interface Today {
+  date: Date
+  response: string
+}
 

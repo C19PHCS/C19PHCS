@@ -44,7 +44,7 @@
               icon="add_alert"
               ><q-tooltip>Set Alert</q-tooltip></q-btn
             >
-            <q-btn
+            <!-- <q-btn
               flat
               color="primary"
               dense
@@ -60,7 +60,7 @@
               @click="deleteRegion(props.row)"
               icon="delete"
               ><q-tooltip>Delete Region</q-tooltip></q-btn
-            >
+            > -->
           </q-td>
         </q-tr>
       </template>
@@ -112,6 +112,15 @@ export default Vue.extend({
           headerStyle: 'width: 17vw',
           field: (row: Region) => row.name,
           sortable: true
+        },
+        {
+          name: 'Alert Level',
+          required: true,
+          label: 'Alert Level',
+          align: 'left',
+          headerStyle: 'width: 17vw',
+          field: (row: Region) => row.alertLevel,
+          sortable: true
         }
       ]
     };
@@ -128,6 +137,10 @@ export default Vue.extend({
           .post('/general/region/create/', region)
           .then(Response => (console.log(Response.data)));
       }
+      this.$q.notify({
+        type: 'positive',
+        message: 'Success'
+      })
       this.$emit('refresh')
       this.isManagingRegion = false
     },
@@ -144,6 +157,10 @@ export default Vue.extend({
       await this.$axios
           .post('/general/region/delete/', data)
           .then(Response => (console.log(Response.data)));
+          this.$q.notify({
+        type: 'negative',
+        message: 'Deleted'
+      })
       this.$emit('refresh')
       console.log(row);
     },
@@ -152,6 +169,7 @@ export default Vue.extend({
       this.isManagingAlert = true
     },
     saveAlert(alert: Alert){
+      this.isManagingAlert = false
       console.log(alert)
     }
   },

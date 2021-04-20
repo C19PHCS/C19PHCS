@@ -19,7 +19,8 @@
         />
         <q-input
           style="margin-bottom: 20px"
-          v-model="localAlert.alertLevelId"
+          v-model="localAlert.alertLevel"
+          type="number"
           dense
           outlined
           label="Level *"
@@ -66,7 +67,7 @@ export default Vue.extend({
   methods: {
     async confirmSaveAlert() {
       const data = {
-        alertLevel: this.localAlert.alertLevelId,
+        alertLevel: +this.localAlert.alertLevel,
         regionName: this.localAlert.regionName
       }
       await this.$axios

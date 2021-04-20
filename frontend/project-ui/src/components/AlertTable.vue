@@ -59,7 +59,7 @@ export default Vue.extend({
           label: 'Alert Level',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: AlertTable) => row.alertLevelId,
+          field: (row: AlertTable) => row.alertLevel,
           sortable: true
         },
         {

@@ -14,8 +14,9 @@
         <q-toolbar-title>
           Main Project
         </q-toolbar-title>
-
-        <div>Quasar v{{ $q.version }}</div>
+<!-- 
+        <div><q-btn label="IncrementDate" @click="incrementDate" color="secondary" type="submit" /></div>
+        <h6>{{today.date}}</h6> -->
       </q-toolbar>
     </q-header>
 
@@ -89,6 +90,7 @@ const linksData = [
 ];
 
 import { defineComponent, ref } from '@vue/composition-api';
+import { Today } from 'src/components/models';
 
 export default defineComponent({
   name: 'MainLayout',
@@ -98,6 +100,18 @@ export default defineComponent({
     const essentialLinks = ref(linksData);
 
     return {leftDrawerOpen, essentialLinks}
+  },
+  data() {
+    return {
+      today: {} as Today
+    };
+  },
+  methods: {
+    async incrementDate(){
+      await this.$axios
+      .get('/increment-date/')
+      .then(response => (this.today = response.data as Today));
+    }
   }
 });
 </script>
