@@ -134,6 +134,97 @@ def action_edit(table, data, **kwargs):
     return {"response": "success"}
 
 
+# 8 and 9. store or get survey
+def survey(action):
+    conn.connect()
+    if action == "store":
+        required = [
+            "medicareNumber",
+            "dateOfBirth",
+            "temperature",
+            "symptoms",
+        ]
+
+        data = request.get_json()
+
+        if any(x not in data for x in required):
+            return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
+
+        query = (
+            f"""SELECT * FROM person
+                WHERE medicareNumber = '{data["medicareNumber"]}'
+                AND dateOfBirth = '{data["dateOfBirth"]}'
+            """
+        )
+        conn.cursor.execute(query)
+
+        if len(conn.cursor.fetchall()):
+            query = (
+                f"""INSERT INTO followUpForm
+                    (
+                        medicareNumber, temperature, fever, cough, shortnessOfBreath,
+                        lossOfTaste, nausea, stomachAche, diarrhea, vomiting, headache, musclePain,
+                        soreThroat, otherSymptoms
+                    )
+                    VALUES
+                    (
+                        '{data["medicareNumber"]}', {data["temperature"]}, {data["symptoms"]["fever"]},
+                        {data["symptoms"]["cough"]}, {data["symptoms"]["shortnessOfBreath"]},
+                        {data["symptoms"]["lossOfTaste"]}, {data["symptoms"]["nausea"]}, {data["symptoms"]["stomachAche"]},
+                        {data["symptoms"]["diarrhea"]}, {data["symptoms"]["vomiting"]}, {data["symptoms"]["headache"]},
+                        {data["symptoms"]["musclePain"]}, {data["symptoms"]["soreThroat"]}, '{data["symptoms"]["otherSymptoms"]}'
+                    )
+                """
+            )
+            conn.cursor.execute(query)
+            conn.cnx.commit()
+            return {"response": "sucess"}
+        else:
+            return {"response": "fail", "reason": f"medicare + DoB don't match"}
+    elif action == "get":
+        required = [
+            "medicareNumber",
+            "date",
+        ]
+
+        data = request.get_json()
+
+        if any(x not in data for x in required):
+            return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
+
+        query = (
+            f"SELECT * FROM followUpForm "
+            f"WHERE medicareNumber = \"{data['medicareNumber']}\" "
+            f"AND dateTime >= '{data['date']}' "
+        )
+
+        conn.cursor.execute(query)
+        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+
+
+# 10. get messages within time period
+def messages():
+    conn.connect()
+
+    required = [
+        "startDateTime",
+        "endDateTime",
+    ]
+
+    data = request.get_json()
+
+    if any(x not in data for x in required):
+        return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
+
+    query = (
+        f"SELECT * FROM messages "
+        f"WHERE dateTime > \"{data['startDateTime']}\" "
+        f"AND dateTime < \"{data['endDateTime']}\" "
+    )
+    # conn.cursor.execute(query)
+    return {"response": "success"}
+
+
 # 7- set new alert for a specific region
 def get_previous_alert(region_name):
     conn.connect()
@@ -148,28 +239,103 @@ def get_previous_alert(region_name):
 
     conn.cursor.execute(query)
 
-    resp = conn.cursor.fetchall()
+    resp = conn.cursor.fetchall()[0]
+    print(resp)
     if conn.cursor is not None:
-        return conn.cursor['alertLevel']
+        return resp['alertLevel']
 
 
-def set_region_alert(data):
+# 11. People at address
+def people_at_address():
     conn.connect()
 
+    required = [
+        "address",
+        "city",
+        "province",
+        "postalCode",
+        "country",
+    ]
+
+    data = request.get_json()
+
+    if any(x not in data for x in required):
+        return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
+
+    query = ("SELECT * FROM person WHERE ") + " AND ".join(
+        [f"{key}='{data[key]}'" for key in required]
+    )
+
+    conn.cursor.execute(query)
+    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+
+
+# 12. get all facility details
+def facilities():
+    conn.connect()
+    query = "SELECT * FROM publicHealthCenter"
+    conn.cursor.execute(query)
+    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+
+# set alert for a given region
+def set_alert_for_region():
+    conn.connect()
+
+    data = request.get_json()
     previous_alert = get_previous_alert(data['regionName'])
 
-    if data['alertLevel'] <= 0 or data['alertLevel'] > 4:
+    if not (0 <= data['alertLevel'] < 4):
         raise Exception('invalid alert level')
     
     if (data['alertLevel'] + 1 is not previous_alert) and (data['alertLevel'] - 1 is not previous_alert):
         raise Exception('cannot set alert to this level')
 
     action_create('alert', data)
+
+    query = (
+        f"""SELECT email FROM people p
+                WHERE p.city IN (
+                    SELECT name FROM city 
+                        WHERE region = '{data["regionName"]}'
+                )
+        """
+    )
+    conn.cursor.execute(query)
+    peopleInRegion = conn.cursor.fetchall()
+
+    query = (
+        f"""SELECT prompt FROM alertDetails
+                WHERE alertLevel = '{data["alertLevel"]}'
+        """
+    )
+    conn.cursor.execute(query)
+    alertPrompt = conn.cursor.fetchall()
+
+    messages = ""
+
+    for person in peopleInRegion:
+        messages += f'(\'{peopleInRegion[person]["email"]}\', {previous_alert}, {data["alertLevel"]}, {alertPrompt}),'
+
+    messages[:-1] += ";"
+
+    query = (
+        f"""INSERT INTO message 
+            (
+                email, oldAlertLevel, newAlertLevel, description
+            )
+            VALUES
+            (
+                {messages}            
+            )
+        """
+    )
+    conn.cursor.execute(query)
+
     return {"response": "success"}
 
 
 # 13- list of all regions
-def get_regions():
+def get_all_regions():
     rows = get_all('region')
     for region in rows:
         cities = get_single('city', {'regionName' : region['name']})
@@ -183,14 +349,15 @@ def get_regions():
         region['cities'] = cities
         region.pop('alertLevel', None)
 
-    return rows
+    return jsonify(rows)
 
 
 # 14- list of people who got the result of the test on a specific date
-def get_test_result_on_date(data):
+def get_all_test_results_on_specific_date():
     conn = conn.connect()
     conn.cursor = conn.conn.cursor()
     
+    data = request.get_json()
     query = (
         f"""SELECT P.firstName, P.lastName, P.dateOfBirth, P.phoneNumber, P.email, D.result
                 FROM
@@ -207,11 +374,11 @@ def get_test_result_on_date(data):
 
 
 # 15- list of workers in specific facility
-def get_workers_at_facility(facilityID):
+def get_all_workers_at_facility(facilityID):
     conn.connect()
 
     query = (
-        f"""SELECT P.firstName, P.lastName, WHCM.healthWorkerID, P.medicareNumber, WHCM.healthCenterID
+        f"""SELECT P.firstName, P.lastName, WHCM.healthWorkerID, P.medicareNumber, WHCM.healthCenterID, P.email, P.phoneNumber, P.dateOfBirth
             FROM pfc353_4.workerHealthCenterMapping as WHCM, pfc353_4.publicHealthWorker as PHW, pfc353_4.person as P
             WHERE
                 healthCenterID = {facilityID} and
@@ -243,9 +410,10 @@ def get_all_at_risk_workers(from_date, to_date, workerId):
     return conn.cursor.fetchall() if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
 
 
-def get_workers_positive_test_at_facility(data):
+def get_workers_positive_at_facility():
     conn.connect()
 
+    data = request.get_json()
     date_formatted = datetime.datetime.strptime(data['testDate'], '%Y-%m-%d')
     date_before = date_formatted - datetime.timedelta(days=14)
     date_before_str = date_before.strftime("%Y-%m-%d")
@@ -279,7 +447,7 @@ def get_workers_positive_test_at_facility(data):
     return jsonify(res)
 
 # 17- report for each region
-def get_all_region_reports():
+def get_region_reports():
     conn.connect()
 
     query = (
@@ -314,29 +482,40 @@ def get_all_region_reports():
         for alert in alerts:
             alert.pop('regionName', None)
 
-    return rows
+    return jsonify(rows)
 
 
 actions = {
     "POST": {
-        "action_create": action_create,
-        "action_delete": action_delete,
-        "action_edit": action_edit,
+        "create": action_create,
+        "delete": action_delete,
+        "edit": action_edit,
+        "get_single": get_single,
     },
     "GET": {
-        "get_single": get_single,
         "get_all": get_all,
     },
 }
 
 
-def perform_action(action, table, data):
-    table_list = ['person', 'publicHealthWorker', 'publicHealthCenter', 'region', 'groupZone', 'groupZoneMapping', 'diagnostic', 'healthRecommendation', 'healthRecommendationSecondary', 'message']
+def perform_action(action, table):
+    table_list = [
+        'person',
+        'publicHealthWorker',
+        'publicHealthCenter',
+        'region',
+        'groupZone',
+        'groupZoneMapping',
+        'diagnostic',
+        'healthRecommendation',
+        'healthRecommendationSecondary',
+        'message'
+    ]
 
     if table not in table_list:
-        raise Exception('invalid table')
+        return {"response": "failed", "reason": "table does not exist"}
 
     try:
-        return actions[request.method][action](table=table, data=data, json=True)
+        return actions[request.method][action](table=table, data=request.get_json(), json=True)
     except Exception as e:
-        return str(e)
+        return {"response": "failed", "reason": str(e)}
