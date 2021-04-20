@@ -49,7 +49,7 @@ app.route('/region/report/', methods=['GET'])(get_region_reports)
 app.route('/set-region-alert/', methods=['POST'])(set_alert_for_region)
 
 # Increment date in db
-app.rout('/increment_date/', methods=['GET'])(increment_date)
+app.route('/increment_date/', methods=['GET'])(increment_date)
 
 
 def on_starting(server):
