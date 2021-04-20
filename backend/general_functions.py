@@ -586,4 +586,8 @@ def increment_date():
     query = (f"""
     INSERT INTO currentDate
     VALUES (DATE '{next_date}')
-    """)    
+    """)
+
+    conn.cursor.execute(query);
+
+    return next_date;
