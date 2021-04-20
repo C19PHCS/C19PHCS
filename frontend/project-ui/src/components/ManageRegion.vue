@@ -39,10 +39,12 @@ export default Vue.extend({
   mounted() {
     this.componentReady = true;
     this.localRegion = JSON.parse(JSON.stringify(this.region)) as Region;
+    this.prevName = this.localRegion.name ?? ''
   },
   data() {
     return {
       localRegion: {} as Region,
+      prevName: '',
       componentReady: false
     };
   },
@@ -56,7 +58,7 @@ export default Vue.extend({
   },
   methods: {
     confirmSaveRegion() {
-      this.$emit('save', this.localRegion)
+      this.$emit('save', this.localRegion, this.prevName)
     }
   },
   components: {}

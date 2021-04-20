@@ -39,6 +39,22 @@
               flat
               color="primary"
               dense
+              @click="viewSurvey(props.row)"
+              icon="summarize"
+              ><q-tooltip>View Survey</q-tooltip></q-btn
+            >
+            <q-btn
+              flat
+              color="primary"
+              dense
+              @click="addSurvey(props.row)"
+              icon="add_circle_outline"
+              ><q-tooltip>Add Survey</q-tooltip></q-btn
+            >
+            <q-btn
+              flat
+              color="primary"
+              dense
               @click="editPerson(props.row)"
               icon="edit"
               ><q-tooltip>Edit Person</q-tooltip></q-btn
@@ -56,6 +72,12 @@
         </q-tr>
       </template>
     </q-table>
+    <q-dialog style="min-width: 1000px" v-model="isViewingSurvey">
+      <symptom :person="localPerson" />
+    </q-dialog>
+    <q-dialog v-model="isManagingSurvey">
+      <manage-survey @save="saveSurvey" :symptoms="localSymptoms" :person="localPerson" />
+    </q-dialog>
     <q-dialog v-model="isManagingPerson">
       <manage-person @save="savePerson" :person="localPerson" />
     </q-dialog>
@@ -64,9 +86,11 @@
 
 <script lang="ts">
 import ManagePerson from 'src/components/ManagePerson.vue';
-import { Person } from 'src/components/models';
+import { Person, Symptoms, SymptomSurvey } from 'src/components/models';
 import TableHeader from 'src/components/TableHeader.vue';
 import Vue from 'vue';
+import Symptom from 'src/components/Symptom.vue';
+import ManageSurvey from 'src/components/ManageSurvey.vue'
 
 export default Vue.extend({
   name: 'PersonTable',
@@ -76,8 +100,22 @@ export default Vue.extend({
     }
   },
   async mounted() {
+    this.localSymptoms = {
+      fever: false,
+      cough: false,
+      shortnessOfBreath: false,
+      lossOfTaste: false,
+      nausea: false,
+      stomachAche: false,
+      diarrhea: false,
+      vomiting: false,
+      headache: false,
+      musclePain: false,
+      soreThroat: false,
+      otherSymptoms: ''
+    };
     await this.$axios
-      .get('/general/person/get_all')
+      .get('/general/person/get_all/')
       .then(Response => (this.people = Response.data as Person[]));
     this.componentReady = true;
     this.loading = false;
@@ -87,7 +125,10 @@ export default Vue.extend({
       componentReady: false,
       people: [] as Person[],
       localPerson: {} as Person,
+      localSymptoms: {} as Symptoms,
+      isViewingSurvey: false,
       isManagingPerson: false,
+      isManagingSurvey: false,
       loading: true,
       columns: [
         {
@@ -148,23 +189,55 @@ export default Vue.extend({
     };
   },
   methods: {
-    savePerson(person: Person) {
-      console.log(person)
-      this.isManagingPerson = false
+    async savePerson(person: Person) {
+      console.log(this.localPerson.medicareNumber);
+      if (this.localPerson.medicareNumber !== undefined) {
+        await this.$axios
+          .post('/general/person/edit/', person)
+          .then(Response => console.log(Response.data));
+      } else {
+        await this.$axios
+          .post('/general/person/create/', person)
+          .then(Response => console.log(Response.data));
+      }
+      this.isManagingPerson = false;
+      this.$emit('refresh');
+    },
+    async saveSurvey(survey: SymptomSurvey) {
+      console.log(survey)
+      await this.$axios
+        .post('/survey/store/', survey)
+        .then(Response => console.log(Response.data));
+      this.isManagingSurvey = false;
+    },
+    addSurvey(row: Person) {
+      this.localPerson = row;
+      console.log(row);
+      this.isManagingSurvey = true;
     },
     editPerson(row: Person) {
       this.localPerson = row;
       console.log(this.localPerson);
       this.isManagingPerson = true;
     },
-    deletePerson(row: Person) {
-      this.localPerson = row;
-      console.log(row);
+    viewSurvey(row: Person){
+      this.localPerson = row
+      this.isViewingSurvey = true
+    },
+    async deletePerson(row: Person) {
+      const data = {
+        medicareNumber: row.medicareNumber
+      };
+      await this.$axios
+        .post('/general/person/delete', data)
+        .then(Response => console.log(Response.data));
     }
   },
   components: {
     TableHeader,
-    ManagePerson
+    ManagePerson,
+    ManageSurvey,
+    Symptom
   }
 });
 </script>

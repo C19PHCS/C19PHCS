@@ -75,9 +75,12 @@ export default Vue.extend({
       type: Boolean
     }
   },
-  mounted() {
+  async mounted() {
+    await this.$axios
+      .get('/general/groupZone/get_all/')
+      .then(Response => (this.groupZones = Response.data as GroupZone[]));
+      console.log(this.groupZones)
     this.componentReady = true;
-    this.groupZones = []
     this.loading = false;
   },
   data() {
@@ -101,8 +104,19 @@ export default Vue.extend({
     };
   },
   methods: {
-    saveGroupZone(zone: GroupZone) {
+    async saveGroupZone(zone: GroupZone) {
       console.log(zone)
+      if (zone.groupID !== undefined) {
+        await this.$axios
+          .post('/general/groupZone/edit/', zone)
+          .then(Response => (console.log(Response.data)));
+      } else {
+        zone.groupID = this.groupZones.length++
+        await this.$axios
+          .post('/general/groupZone/create/', zone)
+          .then(Response => (console.log(Response.data)));
+      }
+      this.$emit('refresh')
       this.isManagingGroupZone = false
     },
     editGroupZone(row: GroupZone) {
@@ -110,8 +124,15 @@ export default Vue.extend({
       console.log(this.localGroupZones);
       this.isManagingGroupZone = true;
     },
-    deleteGroupZone(row: GroupZone) {
+    async deleteGroupZone(row: GroupZone) {
       this.localGroupZones = row;
+      const data = {
+        groupID: row.groupID
+      }
+      await this.$axios
+          .post('/general/groupZone/delete/', data)
+          .then(Response => (console.log(Response.data)));
+      this.$emit('refresh')
       console.log(row);
     }
   },
