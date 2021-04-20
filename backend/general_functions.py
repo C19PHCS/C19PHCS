@@ -262,11 +262,19 @@ def people_at_address():
     if any(x not in data for x in required):
         return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
 
-    query = ("SELECT * FROM person WHERE ") + " AND ".join(
+    query = ("""
+    SELECT child.firstName, child.lastName, child.dateOfBirth, child.medicareNumber, child.phoneNumber, child.citizenship, child.email, father.firstName, father.lastName, mother.firstName, mother.lastName
+    FROM person as child
+    JOIN (SELECT medicareNumber, firstName, lastName FROM person) as father on child.fatherMedicare = father.medicareNumber
+    JOIN (SELECT medicareNumber, firstName, lastName FROM person) as mother on child.motherMedicare = mother.medicareNumber
+
+    """) + " AND ".join(
         [f"{key}='{data[key]}'" for key in required]
     )
 
+    # get people at address
     conn.cursor.execute(query)
+
     return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
 
 
