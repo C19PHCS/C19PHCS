@@ -19,13 +19,6 @@
         />
         <q-input
           style="margin-bottom: 20px"
-          v-model="localAlert.date"
-          dense
-          outlined
-          label="Date *"
-        />
-        <q-input
-          style="margin-bottom: 20px"
           v-model="localAlert.alertLevelId"
           dense
           outlined
@@ -71,7 +64,14 @@ export default Vue.extend({
     }
   },
   methods: {
-    confirmSaveAlert() {
+    async confirmSaveAlert() {
+      const data = {
+        alertLevel: this.localAlert.alertLevelId,
+        regionName: this.localAlert.regionName
+      }
+      await this.$axios
+          .post('/set-region-alert/', data)
+          .then(Response => (console.log(Response.data)));
       this.$emit('save', this.localAlert)
     }
   },

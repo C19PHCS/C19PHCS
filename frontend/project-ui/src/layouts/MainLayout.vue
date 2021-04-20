@@ -69,22 +69,16 @@ const linksData = [
     link: '#/regions'
   },
   {
-    title: 'Public Health worker',
+    title: 'Messages',
     caption: '',
-    icon: 'medication',
-    link: '#/publichealthworker'
+    icon: 'email',
+    link: '#/messages'
   },
   {
     title: 'Group zone',
     caption: '',
     icon: 'group',
     link: '#/groupzones'
-  },
-  {
-    title: 'Symptoms',
-    caption: '',
-    icon: 'note',
-    link: '#/surveys'
   }
 ];
 

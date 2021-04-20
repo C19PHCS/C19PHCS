@@ -69,7 +69,7 @@
         />
         <q-input
           style="margin-bottom: 20px"
-          v-model="localHealthCareWorker.workerId"
+          v-model="localHealthCareWorker.healthWorkerID"
           dense
           outlined
           label="Worker Id *"

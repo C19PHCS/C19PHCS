@@ -88,13 +88,11 @@ export default Vue.extend({
       type: Boolean
     }
   },
-  mounted() {
+  async mounted() {
+    await this.$axios
+      .get('/region/info/')
+      .then(Response => (this.regions = Response.data as Region[]));
     this.componentReady = true;
-    this.regions = [
-      {
-        name: 'Montreal'
-      }
-    ]
     this.loading = false;
   },
   data() {
@@ -119,8 +117,18 @@ export default Vue.extend({
     };
   },
   methods: {
-    saveRegion(region: Region) {
-      console.log(region)
+    async saveRegion(region: Region, prevName: string) {
+      console.log(prevName)
+      if (prevName !== '') {
+        await this.$axios
+          .post('/general/region/edit/', region)
+          .then(Response => (console.log(Response.data)));
+      } else {
+        await this.$axios
+          .post('/general/region/create/', region)
+          .then(Response => (console.log(Response.data)));
+      }
+      this.$emit('refresh')
       this.isManagingRegion = false
     },
     editRegion(row: Region) {
@@ -128,8 +136,15 @@ export default Vue.extend({
       console.log(this.localRegion);
       this.isManagingRegion = true;
     },
-    deleteRegion(row: Region) {
+    async deleteRegion(row: Region) {
       this.localRegion = row;
+      const data = {
+        name: row.name
+      }
+      await this.$axios
+          .post('/general/region/delete/', data)
+          .then(Response => (console.log(Response.data)));
+      this.$emit('refresh')
       console.log(row);
     },
     setAlertForRegion(row: Region) {

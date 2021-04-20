@@ -7,11 +7,10 @@ const routes: RouteConfig[] = [
     children: [
       { path: '', component: () => import('pages/Index.vue') },
       { path: '/people', component: () => import('pages/PersonPage.vue') },
-      { path: '/publichealthworker', component: () => import('pages/PublicHealthWorker.vue') },
+      { path: '/messages', component: () => import('pages/MessagesPage.vue') },
       { path: '/healthcenter', component: () => import('pages/HospitalPage.vue') },
       { path: '/regions', component: () => import('pages/RegionPage.vue') },
-      { path: '/groupzones', component: () => import('pages/GroupZonePage.vue') },
-      { path: '/surveys', component: () => import('pages/SymptomsPage.vue') },
+      { path: '/groupzones', component: () => import('pages/GroupZonePage.vue') }
     ]
   },
 

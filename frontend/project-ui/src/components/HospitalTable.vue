@@ -41,7 +41,7 @@
               dense
               @click="viewWorkers(props.row)"
               icon="person"
-              ><q-tooltip>Edit Center</q-tooltip></q-btn
+              ><q-tooltip>View Workers</q-tooltip></q-btn
             >
             <q-btn
               flat
@@ -188,36 +188,43 @@ export default Vue.extend({
     };
   },
   methods: {
-    saveHospital(hospital: HealthCareCenter) {
-      console.log(hospital);
+    async saveHospital(hospital: HealthCareCenter) {
+      console.log(hospital.id);
+
+      if (hospital.id !== undefined) {
+        await this.$axios
+          .post('/general/publicHealthCenter/edit/', hospital)
+          .then(Response => (console.log(Response.data)));
+      } else {
+        hospital.id = this.hospitals.length++
+        await this.$axios
+          .post('/general/publicHealthCenter/create/', hospital)
+          .then(Response => (console.log(Response.data)));
+      }
+      this.$emit('refresh')
       this.isManagingHospital = false;
+
     },
     viewWorkers(row: HealthCareCenter) {
       this.localHospital = row
       this.isViewingWorkers = true
     },
     createHospital() {
-      this.localHospital = {
-        id: -1,
-        name: null,
-        address: null,
-        webAddress: null,
-        phoneNumber: null,
-        type: null,
-        city: null,
-        province: null,
-        country: null,
-        driveThru: null
-      }
       this.isManagingHospital = true
     },
     editHospital(row: HealthCareCenter) {
       this.localHospital = row;
       this.isManagingHospital = true;
     },
-    deleteHospital(row: HealthCareCenter) {
+    async deleteHospital(row: HealthCareCenter) {
       this.localHospital = row;
-      console.log(row);
+      const data = {
+        id: row.id
+      }
+      await this.$axios
+          .post('/general/publicHealthCenter/delete/', data)
+          .then(Response => (console.log(Response.data)));
+      this.$emit('refresh')
     }
   },
   components: {

@@ -39,10 +39,13 @@ export default Vue.extend({
       JSON.stringify(this.publicHealthCenter)
     ) as HealthCareCenter;
     this.componentReady = true;
-    const id = this.publicHealthCenter.id;
-    await this.$axios
-      .get(`/workers_at_facility/${id}`)
+    const facilityID = this.publicHealthCenter.id;
+    console.log(facilityID)
+    if(facilityID !== null){
+      await this.$axios
+      .get(`/workers-at-facility/${facilityID}/`)
       .then(Response => (this.workers = Response.data as PublicHealthWorker[]));
+    }
   },
   data() {
     return {
@@ -110,16 +113,7 @@ export default Vue.extend({
           label: 'Health Worker Id',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: PublicHealthWorker) => row.workerId,
-          sortable: true
-        },
-        {
-          name: 'Health Center Id',
-          required: true,
-          label: 'Health Center Id',
-          align: 'left',
-          headerStyle: 'width: 17vw',
-          field: (row: PublicHealthWorker) => row.publicHealthCareCenterId,
+          field: (row: PublicHealthWorker) => row.healthWorkerID,
           sortable: true
         }
       ]

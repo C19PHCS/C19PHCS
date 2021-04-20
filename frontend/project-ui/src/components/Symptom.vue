@@ -1,7 +1,14 @@
 <template>
-  <div v-if="componentReady">
-    <q-card style="min-width: 600px" class="no-border">
-        <div class="person-card-flex q-gutter-sm">
+  <q-card v-if="componentReady" style="min-width: 600px" class="no-border">
+    <q-card-section class="flex text-white bg-primary">
+      <div class="text-h6">
+        Search For Symptoms
+      </div>
+      <q-space />
+      <q-btn flat size="sm" v-close-popup round icon="close" />
+    </q-card-section>
+    <q-card-section>
+      <div class="person-card-flex q-gutter-sm">
         <q-input
           style="margin: 20px"
           v-model="medicareNumber"
@@ -19,49 +26,54 @@
         />
       </div>
       <q-form @submit="searchSymptoms">
-      <div style="min-height: 50px;">
-        <q-card-actions align="right">
-          <q-btn label="Search" color="primary" type="submit" />
-        </q-card-actions>
-      </div>
-    </q-form>
-    </q-card>
-  <div v-if="haveResults">
-    <q-table
-      dense
-      flat
-      bordered
-      :columns="columns"
-      :data="survey"
-      row-key="id"
-      :pagination="{ rowsPerPage: 10, sortBy: 'Date From' }"
-      :loading="loading"
-    >
-      <template v-slot:top>
-        <table-header
-          title="Symptoms"
-          :hide-add-button="readOnly"
+        <div style="min-height: 50px;">
+          <q-card-actions align="right">
+            <q-btn label="Search" color="primary" type="submit" />
+          </q-card-actions>
+        </div>
+      </q-form>
+    </q-card-section>
+    <q-card-section>
+      <div v-if="haveResults">
+        <q-table
+          dense
+          flat
+          bordered
+          :columns="columns"
+          :data="survey"
+          row-key="id"
+          :pagination="{ rowsPerPage: 10, sortBy: 'Date From' }"
+          :loading="loading"
         >
-        </table-header>
-      </template>
-    </q-table>
-  </div>
-  </div>
+          <template v-slot:top>
+            <table-header title="Symptoms" :hide-add-button="true">
+            </table-header>
+          </template>
+        </q-table>
+      </div>
+    </q-card-section>
+  </q-card>
 </template>
 
 <script lang="ts">
-import { Survey } from 'src/components/models';
-import TableHeader from 'src/components/TableHeader.vue'
+import { Person, Survey } from 'src/components/models';
+import TableHeader from 'src/components/TableHeader.vue';
 import Vue from 'vue';
 
 export default Vue.extend({
-  name: 'Symptoms',
+  name: 'Symptom',
   props: {
     readOnly: {
       type: Boolean
+    },
+    person: {
+      type: Object as () => Person
     }
   },
   mounted() {
+    this.localPerson = this.person;
+    this.medicareNumber = this.localPerson.medicareNumber;
+    console.log(this.medicareNumber);
     this.componentReady = true;
     this.loading = false;
   },
@@ -69,6 +81,7 @@ export default Vue.extend({
     return {
       componentReady: false,
       medicareNumber: '',
+      localPerson: {} as Person,
       haveResults: false,
       survey: [] as Survey[],
       date: Date,
@@ -89,7 +102,7 @@ export default Vue.extend({
           label: 'Date',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.date,
+          field: (row: Survey) => row.dateTime,
           sortable: true
         },
         {
@@ -107,7 +120,7 @@ export default Vue.extend({
           label: 'Fever',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.fever? 'Yes':'No',
+          field: (row: Survey) => (row.fever ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -116,7 +129,7 @@ export default Vue.extend({
           label: 'Cough',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.cough? 'Yes':'No',
+          field: (row: Survey) => (row.cough ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -125,7 +138,7 @@ export default Vue.extend({
           label: 'Shortness Of Breath',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.shortnessOfBreath? 'Yes':'No',
+          field: (row: Survey) => (row.shortnessOfBreath ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -134,7 +147,7 @@ export default Vue.extend({
           label: 'Loss of Taste',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.lossOfTaste? 'Yes':'No',
+          field: (row: Survey) => (row.lossOfTaste ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -143,7 +156,7 @@ export default Vue.extend({
           label: 'Nausea',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.nausua? 'Yes':'No',
+          field: (row: Survey) => (row.nausea ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -152,7 +165,7 @@ export default Vue.extend({
           label: 'Stomachache',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.stomachAche? 'Yes':'No',
+          field: (row: Survey) => (row.stomachAche ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -161,7 +174,7 @@ export default Vue.extend({
           label: 'Diarrhea',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.diarrhea? 'Yes':'No',
+          field: (row: Survey) => (row.diarrhea ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -170,7 +183,7 @@ export default Vue.extend({
           label: 'Vomitting',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.vomiting? 'Yes':'No',
+          field: (row: Survey) => (row.vomiting ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -179,7 +192,7 @@ export default Vue.extend({
           label: 'Headache',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.headache? 'Yes':'No',
+          field: (row: Survey) => (row.headache ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -188,7 +201,7 @@ export default Vue.extend({
           label: 'Muscle Pain',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.musclePain? 'Yes':'No',
+          field: (row: Survey) => (row.musclePain ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -197,7 +210,7 @@ export default Vue.extend({
           label: 'Sore Throat',
           align: 'left',
           headerStyle: 'width: 17vw',
-          field: (row: Survey) => row.soreThroat? 'Yes':'No',
+          field: (row: Survey) => (row.soreThroat ? 'Yes' : 'No'),
           sortable: true
         },
         {
@@ -214,16 +227,16 @@ export default Vue.extend({
   },
   methods: {
     async searchSymptoms() {
-      this.haveResults = false
-      const searchCriteria =  {
+      this.haveResults = false;
+      const searchCriteria = {
         medicareNumber: this.medicareNumber,
         date: this.date
-      }
+      };
       await this.$axios
-      .post('/symptoms/', searchCriteria)
-      .then(Response => (this.survey = Response.data as Survey[]));
-      console.log(this.survey)
-      this.haveResults = true
+        .post('/survey/get/', searchCriteria)
+        .then(Response => (this.survey = Response.data as Survey[]));
+      console.log(this.survey);
+      this.haveResults = true;
     }
   },
   components: {
@@ -245,7 +258,7 @@ export default Vue.extend({
   }
 
   .address-input {
-    width: 63%
+    width: 63%;
   }
 }
 
