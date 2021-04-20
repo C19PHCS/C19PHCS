@@ -48,6 +48,9 @@ app.route('/region/report/', methods=['GET'])(get_region_reports)
 # set alert for a given region
 app.route('/set-region-alert/', methods=['POST'])(set_alert_for_region)
 
+# Get current date
+app.route('/get_date/', methods=['GET'])(get_date)
+    
 # Increment date in db
 app.route('/increment_date/', methods=['GET'])(increment_date)
 
