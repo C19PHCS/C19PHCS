@@ -559,3 +559,38 @@ def perform_action(action, table):
         )
     except Exception as e:
         return {"response": "failed", "reason": str(e)}
+
+def get_date(json=True): 
+    conn.connect()
+
+    query = ("""
+    SELECT MAX(date) FROM currentDate;
+    """)
+
+    conn.cursor.execute(query)
+    date = conn.cursor.fetchall()[0]
+
+    if json: 
+        return jsonify(date)
+    else: 
+        return date['MAX(date)']
+
+
+def increment_date(): 
+    conn.connect()
+
+    print("increment_date")
+    # get date
+    current_date = get_date(json=False)
+
+    # add next date
+    next_date = current_date + datetime.timedelta(days=1)
+
+    query = (f"""
+    INSERT INTO currentDate
+    VALUES (DATE '{next_date}')
+    """)
+
+    conn.cursor.execute(query);
+
+    return jsonify(next_date);
