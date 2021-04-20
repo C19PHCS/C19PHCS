@@ -69,7 +69,7 @@ def action_create(table, data, **kwargs):
     conn.cursor.execute(query)
     conn.cnx.commit()
 
-    return conn.cursor.lastrowid
+    return {"response": "success"}
 
 
 def action_delete(table, data, **kwargs):
@@ -183,7 +183,7 @@ def survey(action):
                 """
             conn.cursor.execute(query)
             conn.cnx.commit()
-            return {"response": "sucess"}
+            return {"response": "success"}
         else:
             return {"response": "fail", "reason": f"medicare + DoB don't match"}
     elif action == "get":
@@ -252,9 +252,9 @@ def get_previous_alert(region_name):
 
     conn.cursor.execute(query)
 
-    resp = conn.cursor.fetchall()[0]
-    if conn.cursor is not None:
-        return resp["alertLevel"]
+    resp = conn.cursor.fetchall()
+    if conn.cursor is not None and len(resp):
+        return resp[0]["alertLevel"]
 
 
 # 11. People at address
@@ -323,8 +323,10 @@ def set_alert_for_region():
     if not (0 <= data["alertLevel"] < 4):
         raise Exception("invalid alert level")
 
-    if (data["alertLevel"] + 1 is not previous_alert) and (
-        data["alertLevel"] - 1 is not previous_alert
+    if (
+        (data["alertLevel"])
+        and (data["alertLevel"] + 1 is not previous_alert)
+        and (data["alertLevel"] - 1 is not previous_alert)
     ):
         raise Exception("cannot set alert to this level")
 
@@ -366,6 +368,7 @@ def set_alert_for_region():
 
 
 # 13- list of all regions
+# TODO: add alertLevel to response
 def get_all_regions():
     rows = get_all("region")
     for region in rows:
