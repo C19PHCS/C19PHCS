@@ -3,12 +3,13 @@ import datetime
 
 from database import conn
 
+
 def get_single(table, data, json=False, **kwargs):
     if table is None or data is None:
         return {"response": "failed", "reason": "query failed"}
 
     conn.connect()
-    
+
     temp = ""
     for k, v in data.items():
         if isinstance(v, str):
@@ -21,7 +22,11 @@ def get_single(table, data, json=False, **kwargs):
 
     conn.cursor.execute(query)
     if json:
-        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+        return (
+            jsonify(conn.cursor.fetchall())
+            if conn.cursor is not None
+            else {"response": "failed", "reason": "query failed"}
+        )
     else:
         return conn.cursor.fetchall()
 
@@ -31,10 +36,14 @@ def get_all(table, json=False, **kwargs):
         return {"response": "failed", "reason": "query failed"}
     conn.connect()
 
-    query = (f"SELECT * FROM {table}")
+    query = f"SELECT * FROM {table}"
     conn.cursor.execute(query)
     if json:
-        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+        return (
+            jsonify(conn.cursor.fetchall())
+            if conn.cursor is not None
+            else {"response": "failed", "reason": "query failed"}
+        )
     else:
         return conn.cursor.fetchall()
 
@@ -85,13 +94,13 @@ def action_delete(table, data, **kwargs):
 
 
 primary_keys = {
-    'person' : ['medicareNumber'],
-    'publicHealthWorker' : ['workerID'],
-    'publicHealthCenter' : ['id'],
-    'region' : ['name'],
-    'groupZone' : ['groupID'],
-    'healthRecommendation' : ['id'],
-    'healthRecommendationSecondary': ['id', 'recommendation']
+    "person": ["medicareNumber"],
+    "publicHealthWorker": ["workerID"],
+    "publicHealthCenter": ["id"],
+    "region": ["name"],
+    "groupZone": ["groupID"],
+    "healthRecommendation": ["id"],
+    "healthRecommendationSecondary": ["id", "recommendation"],
 }
 
 
@@ -127,7 +136,7 @@ def action_edit(table, data, **kwargs):
     temp2 = temp2[:-5]
 
     query = ("UPDATE {} SET {} WHERE {};").format(table, temp, temp2)
-    
+
     conn.cursor.execute(query)
     conn.cnx.commit()
 
@@ -150,17 +159,14 @@ def survey(action):
         if any(x not in data for x in required):
             return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
 
-        query = (
-            f"""SELECT * FROM person
+        query = f"""SELECT * FROM person
                 WHERE medicareNumber = '{data["medicareNumber"]}'
                 AND dateOfBirth = '{data["dateOfBirth"]}'
             """
-        )
         conn.cursor.execute(query)
 
         if len(conn.cursor.fetchall()):
-            query = (
-                f"""INSERT INTO followUpForm
+            query = f"""INSERT INTO followUpForm
                     (
                         medicareNumber, temperature, fever, cough, shortnessOfBreath,
                         lossOfTaste, nausea, stomachAche, diarrhea, vomiting, headache, musclePain,
@@ -175,7 +181,6 @@ def survey(action):
                         {data["symptoms"]["musclePain"]}, {data["symptoms"]["soreThroat"]}, '{data["symptoms"]["otherSymptoms"]}'
                     )
                 """
-            )
             conn.cursor.execute(query)
             conn.cnx.commit()
             return {"response": "sucess"}
@@ -199,7 +204,11 @@ def survey(action):
         )
 
         conn.cursor.execute(query)
-        return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+        return (
+            jsonify(conn.cursor.fetchall())
+            if conn.cursor is not None
+            else {"response": "failed", "reason": "query failed"}
+        )
 
 
 # 10. get messages within time period
@@ -229,20 +238,19 @@ def messages():
 def get_previous_alert(region_name):
     conn.connect()
 
-    query = (
-        f"""SELECT DISTINCT alertLevel, date
+    query = f"""SELECT DISTINCT alertLevel, date
             FROM alert
             WHERE regionName = '{region_name}'
             ORDER BY date DESC
             LIMIT 1
-        """)
+        """
 
     conn.cursor.execute(query)
 
     resp = conn.cursor.fetchall()[0]
     print(resp)
     if conn.cursor is not None:
-        return resp['alertLevel']
+        return resp["alertLevel"]
 
 
 # 11. People at address
@@ -262,20 +270,31 @@ def people_at_address():
     if any(x not in data for x in required):
         return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
 
-    query = ("""
-    SELECT child.firstName, child.lastName, child.dateOfBirth, child.medicareNumber, child.phoneNumber, child.citizenship, child.email, father.firstName, father.lastName, mother.firstName, mother.lastName
-    FROM person as child
-    JOIN (SELECT medicareNumber, firstName, lastName FROM person) as father on child.fatherMedicare = father.medicareNumber
-    JOIN (SELECT medicareNumber, firstName, lastName FROM person) as mother on child.motherMedicare = mother.medicareNumber
-
-    """) + " AND ".join(
-        [f"{key}='{data[key]}'" for key in required]
+    query = (
+        (
+            """ SELECT child.firstName, child.lastName, child.dateOfBirth,
+                        child.medicareNumber, child.phoneNumber, child.citizenship,
+                        child.email, father.firstName as fatherFirstName,
+                        father.lastName as fatherLastName,
+                        mother.firstName motherFirstName, mother.lastName motherLastName
+                FROM person as child
+                JOIN (SELECT medicareNumber, firstName, lastName FROM person) as father on child.fatherMedicare = father.medicareNumber
+                JOIN (SELECT medicareNumber, firstName, lastName FROM person) as mother on child.motherMedicare = mother.medicareNumber
+                WHERE 
+            """
+        )
+        + " AND ".join([f"{key}='{data[key]}'" for key in required])
     )
 
+    print(query)
     # get people at address
     conn.cursor.execute(query)
 
-    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+    return (
+        jsonify(conn.cursor.fetchall())
+        if conn.cursor is not None
+        else {"response": "failed", "reason": "query failed"}
+    )
 
 
 # 12. get all facility details
@@ -283,39 +302,42 @@ def facilities():
     conn.connect()
     query = "SELECT * FROM publicHealthCenter"
     conn.cursor.execute(query)
-    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+    return (
+        jsonify(conn.cursor.fetchall())
+        if conn.cursor is not None
+        else {"response": "failed", "reason": "query failed"}
+    )
+
 
 # set alert for a given region
 def set_alert_for_region():
     conn.connect()
 
     data = request.get_json()
-    previous_alert = get_previous_alert(data['regionName'])
+    previous_alert = get_previous_alert(data["regionName"])
 
-    if not (0 <= data['alertLevel'] < 4):
-        raise Exception('invalid alert level')
-    
-    if (data['alertLevel'] + 1 is not previous_alert) and (data['alertLevel'] - 1 is not previous_alert):
-        raise Exception('cannot set alert to this level')
+    if not (0 <= data["alertLevel"] < 4):
+        raise Exception("invalid alert level")
 
-    action_create('alert', data)
+    if (data["alertLevel"] + 1 is not previous_alert) and (
+        data["alertLevel"] - 1 is not previous_alert
+    ):
+        raise Exception("cannot set alert to this level")
 
-    query = (
-        f"""SELECT email FROM people p
+    action_create("alert", data)
+
+    query = f"""SELECT email FROM people p
                 WHERE p.city IN (
                     SELECT name FROM city 
                         WHERE region = '{data["regionName"]}'
                 )
         """
-    )
     conn.cursor.execute(query)
     peopleInRegion = conn.cursor.fetchall()
 
-    query = (
-        f"""SELECT prompt FROM alertDetails
+    query = f"""SELECT prompt FROM alertDetails
                 WHERE alertLevel = '{data["alertLevel"]}'
         """
-    )
     conn.cursor.execute(query)
     alertPrompt = conn.cursor.fetchall()
 
@@ -326,8 +348,7 @@ def set_alert_for_region():
 
     messages[:-1] += ";"
 
-    query = (
-        f"""INSERT INTO message 
+    query = f"""INSERT INTO message 
             (
                 email, oldAlertLevel, newAlertLevel, description
             )
@@ -336,7 +357,6 @@ def set_alert_for_region():
                 {messages}            
             )
         """
-    )
     conn.cursor.execute(query)
 
     return {"response": "success"}
@@ -344,18 +364,18 @@ def set_alert_for_region():
 
 # 13- list of all regions
 def get_all_regions():
-    rows = get_all('region')
+    rows = get_all("region")
     for region in rows:
-        cities = get_single('city', {'regionName' : region['name']})
+        cities = get_single("city", {"regionName": region["name"]})
 
         for city in cities:
-            postal_codes = get_single('cityPostalCodeMapping', {'city' : city['name']})
-            temp = list(map(lambda x: x['postalCodeRegion'], postal_codes))
-            city['postalCodes'] = temp
-            city.pop('regionName', None)
+            postal_codes = get_single("cityPostalCodeMapping", {"city": city["name"]})
+            temp = list(map(lambda x: x["postalCodeRegion"], postal_codes))
+            city["postalCodes"] = temp
+            city.pop("regionName", None)
 
-        region['cities'] = cities
-        region.pop('alertLevel', None)
+        region["cities"] = cities
+        region.pop("alertLevel", None)
 
     return jsonify(rows)
 
@@ -364,46 +384,51 @@ def get_all_regions():
 def get_all_test_results_on_specific_date():
     conn = conn.connect()
     conn.cursor = conn.conn.cursor()
-    
+
     data = request.get_json()
-    query = (
-        f"""SELECT P.firstName, P.lastName, P.dateOfBirth, P.phoneNumber, P.email, D.result
+    query = f"""SELECT P.firstName, P.lastName, P.dateOfBirth, P.phoneNumber, P.email, D.result
                 FROM
                 (SELECT medicareNumber, result
                     FROM diagnostic
                     WHERE testDate = '{data['testDate']}') as D, person as P
                 WHERE P.medicareNumber = D.medicareNumber
                 ORDER BY D.result DESC
-        """)
+        """
 
     conn.cursor.execute(query)
 
-    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+    return (
+        jsonify(conn.cursor.fetchall())
+        if conn.cursor is not None
+        else {"response": "failed", "reason": "query failed"}
+    )
 
 
 # 15- list of workers in specific facility
 def get_all_workers_at_facility(facilityID):
     conn.connect()
 
-    query = (
-        f"""SELECT P.firstName, P.lastName, WHCM.healthWorkerID, P.medicareNumber, WHCM.healthCenterID, P.email, P.phoneNumber, P.dateOfBirth
+    query = f"""SELECT P.firstName, P.lastName, WHCM.healthWorkerID, P.medicareNumber, WHCM.healthCenterID, P.email, P.phoneNumber, P.dateOfBirth
             FROM pfc353_4.workerHealthCenterMapping as WHCM, pfc353_4.publicHealthWorker as PHW, pfc353_4.person as P
             WHERE
                 healthCenterID = {facilityID} and
                 WHCM.healthWorkerID = PHW.workerID and
                 PHW.medicareNumber = P.medicareNumber and
                 WHCM.endDate is null
-        """)
+        """
 
     conn.cursor.execute(query)
-    return jsonify(conn.cursor.fetchall()) if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+    return (
+        jsonify(conn.cursor.fetchall())
+        if conn.cursor is not None
+        else {"response": "failed", "reason": "query failed"}
+    )
 
 
 # 16- list of all public health workers who tested positive on a specific date in a specific facility
 def get_all_at_risk_workers(from_date, to_date, workerId):
     conn.connect()
-    query = (
-        f"""SELECT DISTINCT PHW2.workerID, P.firstName, P.lastName
+    query = f"""SELECT DISTINCT PHW2.workerID, P.firstName, P.lastName
             FROM workerSchedule as WS1, workerSchedule as WS2, publicHealthWorker as PHW2, person as P
             WHERE
                 WS2.workerID <> {workerId} and
@@ -412,21 +437,24 @@ def get_all_at_risk_workers(from_date, to_date, workerId):
                 WS1.healthCenterID = WS2.healthCenterID and
                 WS2.workerID = PHW2.workerID and
                 PHW2.medicareNumber = P.medicareNumber;
-        """)
+        """
 
     conn.cursor.execute(query)
-    return conn.cursor.fetchall() if conn.cursor is not None else {"response": "failed", "reason": "query failed"}
+    return (
+        conn.cursor.fetchall()
+        if conn.cursor is not None
+        else {"response": "failed", "reason": "query failed"}
+    )
 
 
 def get_workers_positive_at_facility():
     conn.connect()
 
     data = request.get_json()
-    date_formatted = datetime.datetime.strptime(data['testDate'], '%Y-%m-%d')
+    date_formatted = datetime.datetime.strptime(data["testDate"], "%Y-%m-%d")
     date_before = date_formatted - datetime.timedelta(days=14)
     date_before_str = date_before.strftime("%Y-%m-%d")
-    query = (
-        f"""SELECT workerID, P.firstName, P.lastName
+    query = f"""SELECT workerID, P.firstName, P.lastName
                 FROM
                 (SELECT healthWorkerID
                 FROM workerHealthCenterMapping
@@ -435,7 +463,7 @@ def get_workers_positive_at_facility():
                     WHCM.healthWorkerID = PHW.workerID and
                     D.testDate = '{data['testDate']}' and
                     PHW.medicareNumber = P.medicareNumber
-        """)
+        """
 
     conn.cursor.execute(query)
 
@@ -447,19 +475,21 @@ def get_workers_positive_at_facility():
     res = []
     for worker in resp:
         temp = {}
-        temp['sickWorker'] = worker
-        workerid = worker['workerID']
-        temp['atRiskWorkers'] = get_all_at_risk_workers(date_before_str, data['testDate'], workerid)
+        temp["sickWorker"] = worker
+        workerid = worker["workerID"]
+        temp["atRiskWorkers"] = get_all_at_risk_workers(
+            date_before_str, data["testDate"], workerid
+        )
         res.append(temp)
 
     return jsonify(res)
+
 
 # 17- report for each region
 def get_region_reports():
     conn.connect()
 
-    query = (
-        """SELECT negative_count.regionName, positive_count.count as positiveCount, negative_count.count as negativeCount
+    query = """SELECT negative_count.regionName, positive_count.count as positiveCount, negative_count.count as negativeCount
                 FROM 
                 (SELECT count(P.medicareNumber) as count, D.result, C.regionName
                 FROM diagnostic as D, person as P, city as C
@@ -476,7 +506,7 @@ def get_region_reports():
                     P.city = C.`name`
                 GROUP BY D.result, C.regionName) as negative_count
                 WHERE negative_count.regionName = positive_count.regionName;
-        """)
+        """
 
     conn.cursor.execute(query)
 
@@ -484,11 +514,11 @@ def get_region_reports():
     rows = [dict(zip(columns, row)) for row in conn.cursor.fetchall()]
 
     for report in rows:
-        alerts = get_single('alert', {'regionName' : report['regionName']})
-        report['alertHistory'] = alerts
-        
+        alerts = get_single("alert", {"regionName": report["regionName"]})
+        report["alertHistory"] = alerts
+
         for alert in alerts:
-            alert.pop('regionName', None)
+            alert.pop("regionName", None)
 
     return jsonify(rows)
 
@@ -508,22 +538,24 @@ actions = {
 
 def perform_action(action, table):
     table_list = [
-        'person',
-        'publicHealthWorker',
-        'publicHealthCenter',
-        'region',
-        'groupZone',
-        'groupZoneMapping',
-        'diagnostic',
-        'healthRecommendation',
-        'healthRecommendationSecondary',
-        'message'
+        "person",
+        "publicHealthWorker",
+        "publicHealthCenter",
+        "region",
+        "groupZone",
+        "groupZoneMapping",
+        "diagnostic",
+        "healthRecommendation",
+        "healthRecommendationSecondary",
+        "message",
     ]
 
     if table not in table_list:
         return {"response": "failed", "reason": "table does not exist"}
 
     try:
-        return actions[request.method][action](table=table, data=request.get_json(), json=True)
+        return actions[request.method][action](
+            table=table, data=request.get_json(), json=True
+        )
     except Exception as e:
         return {"response": "failed", "reason": str(e)}
