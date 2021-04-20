@@ -226,12 +226,17 @@ def messages():
         return {"response": "fail", "reason": f"Expected keys: {str(required)}"}
 
     query = (
-        f"SELECT * FROM messages "
-        f"WHERE dateTime > \"{data['startDateTime']}\" "
-        f"AND dateTime < \"{data['endDateTime']}\" "
+        f"SELECT * FROM message "
+        f"WHERE dateTime >= \"{data['startDateTime']}\" "
+        f"AND dateTime <= \"{data['endDateTime']}\" "
     )
-    # conn.cursor.execute(query)
-    return {"response": "success"}
+    conn.cursor.execute(query)
+
+    return (
+        jsonify(conn.cursor.fetchall())
+        if conn.cursor is not None
+        else {"response": "failed", "reason": "query failed"}
+    )
 
 
 # 7- set new alert for a specific region
@@ -248,7 +253,6 @@ def get_previous_alert(region_name):
     conn.cursor.execute(query)
 
     resp = conn.cursor.fetchall()[0]
-    print(resp)
     if conn.cursor is not None:
         return resp["alertLevel"]
 
@@ -326,10 +330,10 @@ def set_alert_for_region():
 
     action_create("alert", data)
 
-    query = f"""SELECT email FROM people p
+    query = f"""SELECT email FROM person p
                 WHERE p.city IN (
                     SELECT name FROM city 
-                        WHERE region = '{data["regionName"]}'
+                        WHERE regionName = '{data["regionName"]}'
                 )
         """
     conn.cursor.execute(query)
@@ -339,25 +343,24 @@ def set_alert_for_region():
                 WHERE alertLevel = '{data["alertLevel"]}'
         """
     conn.cursor.execute(query)
-    alertPrompt = conn.cursor.fetchall()
+    alertPrompt = conn.cursor.fetchall()[0]["prompt"]
 
     messages = ""
 
     for person in peopleInRegion:
-        messages += f'(\'{peopleInRegion[person]["email"]}\', {previous_alert}, {data["alertLevel"]}, {alertPrompt}),'
+        messages += f'(\'{person["email"]}\', {previous_alert}, {data["alertLevel"]}, \'{alertPrompt}\'),'
 
-    messages[:-1] += ";"
+    messages = messages[:-1]
 
     query = f"""INSERT INTO message 
             (
                 email, oldAlertLevel, newAlertLevel, description
             )
             VALUES
-            (
-                {messages}            
-            )
+            {messages}
         """
     conn.cursor.execute(query)
+    conn.cnx.commit()
 
     return {"response": "success"}
 
@@ -538,6 +541,7 @@ actions = {
 
 def perform_action(action, table):
     table_list = [
+        "alert",
         "person",
         "publicHealthWorker",
         "publicHealthCenter",
@@ -559,3 +563,47 @@ def perform_action(action, table):
         )
     except Exception as e:
         return {"response": "failed", "reason": str(e)}
+
+
+def get_date(json=True):
+    conn.connect()
+
+    query = """
+    SELECT MAX(date) FROM currentDate;
+    """
+
+    conn.cursor.execute(query)
+    date = conn.cursor.fetchall()[0]
+
+    if json:
+        return (
+            conn.cursor.fetchall()
+            if conn.cursor is not None
+            else {"response": "failed", "reason": "query failed"}
+        )
+    else:
+        return date["MAX(date)"]
+
+
+def increment_date():
+    conn.connect()
+
+    # get date
+    current_date = get_date(json=False)
+
+    # add next date
+    next_date = current_date + datetime.timedelta(days=1)
+
+    query = f"""
+    INSERT INTO currentDate
+    VALUES (DATE '{next_date}')
+    """
+
+    conn.cursor.execute(query)
+    conn.cnx.commit()
+
+    new_date = get_date(json=False)
+    if new_date == next_date:
+        return jsonify({"response": "success", "date": next_date})
+    else:
+        return {"response": "failed", "reason": "unknown"}

@@ -22,7 +22,7 @@ app.route('/general/<table>/<action>/', methods=['GET', 'POST'])(perform_action)
 app.route("/survey/<string:action>/", methods=["POST"])(survey)
 
 # 10. get messages within time period
-app.route("/messages/", methods=["GET"])(messages)
+app.route("/messages/", methods=["POST"])(messages)
 
 # 11. People at address
 app.route("/people-at-address/", methods=["GET"])(people_at_address)
@@ -47,6 +47,12 @@ app.route('/region/report/', methods=['GET'])(get_region_reports)
 
 # set alert for a given region
 app.route('/set-region-alert/', methods=['POST'])(set_alert_for_region)
+
+# Get current date
+app.route('/get_date/', methods=['GET'])(get_date)
+    
+# Increment date in db
+app.route('/increment-date/', methods=['GET'])(increment_date)
 
 
 def on_starting(server):
